@@ -1,0 +1,11 @@
+.venv/
+tmp/
+DIARY.md
+.env
+.DS_Store
+__pycache__/
+*.pyc
+build/
+managed_components/
+sdkconfig
+sdkconfig.old

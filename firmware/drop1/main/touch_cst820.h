@@ -1,0 +1,10 @@
+#pragma once
+
+#include <stdbool.h>
+#include <stdint.h>
+#include "esp_err.h"
+
+esp_err_t touch_init(void);
+
+// Returns true while a finger is on the panel; x, y in display coordinates.
+bool touch_read(uint16_t *x, uint16_t *y);
