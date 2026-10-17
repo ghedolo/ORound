@@ -12,7 +12,7 @@ grid seen through the water surface, bent by the waves (refraction).
 - Board: Waveshare ESP32-S3-Touch-AMOLED-1.32 (ESP32-S3-PICO-1-N8R8, 8 MB flash, 8 MB octal PSRAM)
 - Display: 466x466 AMOLED, CO5300 controller, QSPI at 40 MHz, driven in RGB888 (24 bit)
 - Touch: CST820 on I2C (address 0x15)
-- Buttons: BOOT (GPIO0) cycles the color palettes; PWR (GPIO17) toggles the microphone in `drop_16M_pool_listening`, long press powers off in `drop_16M_pool_tiles`
+- Buttons: BOOT (GPIO0) cycles the color palettes; PWR (GPIO17) toggles the microphone in `drop_16M_pool_listening`, long press powers off in `drop_16M_pool_tiles`; in `drop_16M_pool_image` / `drop_16M_pool_crystal` a short press toggles the microphone and a long press powers off
 - Docs: <https://docs.waveshare.com/ESP32-S3-Touch-AMOLED-1.32>
 
 ## Firmware experiments
@@ -29,6 +29,8 @@ Each experiment is a standalone ESP-IDF project under `firmware/`.
 | `drop_16M_grid2x2_pie` | Wave step in fixed point with ESP32-S3 PIE vector instructions (8 x int16 per instruction) |
 | `drop_16M_pool` | Pool floor grid deformed by refraction, 4 palettes, ~20 fps |
 | `drop_16M_pool_tiles` | Pool with tiles in slightly different azure shades (azure palette); long press PWR powers off (battery) or deep sleeps (USB) |
+| `drop_16M_pool_image` | Pool floor from an image: coverage mask drawn with the palette, full color image, or animated GIF (frames switched in time); microphone ripples |
+| `drop_16M_pool_crystal` | Frozen copy of `drop_16M_pool_image` with a rotating crystal animation on a green background |
 | `drop_16M_pool_listening` | Pool that listens: microphone (ES8311) sound level ripples the water with small random drops; PWR toggles the microphone |
 
 ### How the simulation works
@@ -57,6 +59,21 @@ scripts/flash.sh firmware/drop_16M_pool <port> --monitor
 
 The serial log prints frames per second and the time of the simulation step and of the render every 2 s.
 
+### Pool floor images
+
+`drop_16M_pool_image` and `drop_16M_pool_crystal` embed `main/floor.bin`, produced by
+`scripts/make_mask.py` (Pillow, run in the project `.venv`). The file is not in the
+repository (third-party images); generate it before building, for example:
+
+```
+python scripts/make_mask.py figure.png firmware/drop_16M_pool_image/main/floor.bin 400
+python scripts/make_mask.py photo.jpg  firmware/drop_16M_pool_image/main/floor.bin 514 --rgb --crop=x0,y0,x1,y1
+python scripts/make_mask.py anim.gif   firmware/drop_16M_pool_image/main/floor.bin 466 --anim --step=2 --bg=23c423
+```
+
+The firmware detects the mode from the file: coverage mask (514x514 bytes), RGB888 image
+(514x514x3 bytes) or animation (`FLA2` header, indexed frames, shared palette).
+
 ## License
 
 - Code: GPL-3.0-or-later
@@ -75,12 +92,12 @@ Figures extracted from the local Claude Code session transcripts of this project
 | Metric | Value |
 |---|---|
 | First message (UTC) | 2026-10-16 19:12 |
-| Last message (UTC) | 2026-10-17 10:45 |
+| Last message (UTC) | 2026-10-17 21:58 |
 | Calendar span | 2 days |
-| Commits | 12 |
+| Commits | 14 |
 | Sessions | 2 |
-| Messages (user + assistant) | 438 (90 + 348) |
-| Active time | ~3.36 h |
+| Messages (user + assistant) | 515 (102 + 413) |
+| Active time | ~3.98 h |
 
 Active time is the sum of the gaps between consecutive messages (user and assistant,
 sorted by timestamp) that are at most 5 minutes long. Longer gaps are treated as pauses
@@ -89,17 +106,17 @@ build and flash waits shorter than 5 minutes.
 
 | Tokens | Count |
 |---|---|
-| Input (non-cache) | 696 |
-| Output | 271,853 |
-| Cache write | 733,143 |
-| Cache read | 57,737,168 |
-| Total | 58,742,860 |
+| Input (non-cache) | 826 |
+| Output | 321,006 |
+| Cache write | 1,124,172 |
+| Cache read | 80,084,173 |
+| Total | 81,530,177 |
 
 Cache read tokens are the conversation context re-sent to the model at every turn and
 served from the prompt cache; they are by far the largest share but are billed at a
 fraction of the normal input price.
 
 **Caveman mode.** Both sessions ran with Caveman mode active (terse responses).
-Average output was 781 tokens per assistant message (271,853 output tokens in total).
+Average output was 777 tokens per assistant message (321,006 output tokens in total).
 No session without Caveman mode exists in this project, so no comparison with
 standard mode is available.
