@@ -30,7 +30,7 @@ Each experiment is a standalone ESP-IDF project under `firmware/`.
 | `drop_16M_pool` | Pool floor grid deformed by refraction, 4 palettes, ~20 fps |
 | `drop_16M_pool_tiles` | Pool with tiles in slightly different azure shades (azure palette); long press PWR powers off (battery) or deep sleeps (USB) |
 | `drop_16M_pool_image` | Pool floor from an image: coverage mask drawn with the palette, full color image, or animated GIF (frames switched in time); microphone ripples |
-| `drop_16M_pool_crystal` | Frozen copy of `drop_16M_pool_image` with a rotating crystal animation on a green background |
+| `drop_16M_pool_crystal` | Frozen copy of `drop_16M_pool_image` with a rotating crystal animation on a dark green background (`--anim --step=2 --bg=198919`, 466 px) |
 | `drop_16M_pool_listening` | Pool that listens: microphone (ES8311) sound level ripples the water with small random drops; PWR toggles the microphone |
 
 ### How the simulation works
@@ -94,7 +94,7 @@ Figures extracted from the local Claude Code session transcripts of this project
 | First message (UTC) | 2026-10-16 19:12 |
 | Last message (UTC) | 2026-10-17 21:58 |
 | Calendar span | 2 days |
-| Commits | 14 |
+| Commits | 15 |
 | Sessions | 2 |
 | Messages (user + assistant) | 515 (102 + 413) |
 | Active time | ~3.98 h |
