@@ -29,3 +29,6 @@
 // Power latch: keeps the board on when running from battery
 #define PWR_PIN_LATCH     18
 #define PWR_PIN_KEY       17
+
+// BOOT button, active low (external pull-up)
+#define BOOT_PIN_KEY      0

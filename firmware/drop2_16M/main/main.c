@@ -14,6 +14,7 @@
 #define DRAG_INTERVAL_US  40000
 #define DRAG_MIN_DIST2    (12 * 12)
 #define STEPS_PER_FRAME   1
+#define KEY_DEBOUNCE_US   150000
 
 static const char *TAG = "drop2_16M";
 
@@ -25,6 +26,42 @@ static void power_latch_on(void)
     };
     gpio_config(&cfg);
     gpio_set_level(PWR_PIN_LATCH, 1);
+}
+
+// Push button with debounce. The idle level is sampled at boot, so the
+// polarity does not need to be known (BOOT is active low, PWR level depends on the board).
+typedef struct {
+    int pin;
+    int idle_level;
+    bool was_down;
+    int64_t change_us;
+} key_t;
+
+static key_t s_boot_key = {.pin = BOOT_PIN_KEY};
+static key_t s_pwr_key = {.pin = PWR_PIN_KEY};
+
+static void key_init(key_t *key, bool pull_up)
+{
+    gpio_config_t cfg = {
+        .pin_bit_mask = 1ULL << key->pin,
+        .mode = GPIO_MODE_INPUT,
+        .pull_up_en = pull_up ? GPIO_PULLUP_ENABLE : GPIO_PULLUP_DISABLE,
+    };
+    gpio_config(&cfg);
+    key->idle_level = gpio_get_level(key->pin);
+    ESP_LOGI(TAG, "key GPIO%d idle level %d", key->pin, key->idle_level);
+}
+
+// Returns true once per press
+static bool key_pressed(key_t *key, int64_t now)
+{
+    bool down = gpio_get_level(key->pin) != key->idle_level;
+    if (down == key->was_down || now - key->change_us < KEY_DEBOUNCE_US) {
+        return false;
+    }
+    key->was_down = down;
+    key->change_us = now;
+    return down;
 }
 
 static void water_task(void *arg)
@@ -59,6 +96,14 @@ static void water_task(void *arg)
         }
         was_pressed = pressed;
 
+        // BOOT: next palette, PWR: previous palette
+        if (key_pressed(&s_boot_key, now)) {
+            ripple_set_palette(+1);
+        }
+        if (key_pressed(&s_pwr_key, now)) {
+            ripple_set_palette(-1);
+        }
+
         int64_t t_step = esp_timer_get_time();
         for (int i = 0; i < STEPS_PER_FRAME; i++) {
             ripple_step();
@@ -86,6 +131,8 @@ void app_main(void)
     power_latch_on();
     ESP_ERROR_CHECK(panel_init());
     ESP_ERROR_CHECK(touch_init());
+    key_init(&s_boot_key, true);
+    key_init(&s_pwr_key, false);
     ESP_ERROR_CHECK(ripple_init());
     xTaskCreatePinnedToCore(water_task, "water", 6 * 1024, NULL, 5, NULL, 1);
 }

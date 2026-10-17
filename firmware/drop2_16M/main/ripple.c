@@ -7,6 +7,7 @@
 #include "esp_check.h"
 #include "esp_heap_caps.h"
 #include "esp_log.h"
+#include "esp_timer.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "panel.h"
@@ -35,13 +36,12 @@
 #define LUT_LEVELS     (2 * LUT_OFFSET / LUT_DIV)
 #define LUT_RINGS      32              // radial background colors, ~1 level apart, dithered in between
 #define EDGE_POWER     2.0f            // higher = brightening closer to the edge only
-#define PALETTE        3               // index into s_palettes
+#define PALETTE_START  0               // index into s_palettes used at boot
 
 // Each tap gets a random crest tint between the palette crest color (tint 0)
-// and this color (tint 1). The tint travels with the waves through a second wave
+// and the palette alt color (tint 1). The tint travels with the waves through a second wave
 // field driven by strength * tint: the wave equation is linear, so that field is
 // the tint-weighted sum of all drops, and slope2 / slope1 gives the local tint.
-static const float s_crest_alt[3] = {170, 175, 40};   // lemon yellow
 
 static const char *TAG = "ripple";
 
@@ -88,20 +88,28 @@ static TaskHandle_t s_caller;
 static job_fn_t s_job_fn;
 static void *s_job_arg;
 
-// Color palettes: flat water at center and at edge, crest (positive slope), trough (negative slope)
+// Color palettes: flat water at center and at edge, crest (positive slope), trough (negative slope),
+// alternate crest color for the per-tap tint
 typedef struct {
     float base[3];
     float edge[3];
     float light[3];
     float deep[3];
+    float alt[3];
 } palette_t;
 
 static const palette_t s_palettes[] = {
-    {{0, 14, 60}, {0, 14, 60}, {20, 130, 85}, {0, 2, 20}},      // 0: dark blue, emerald crests
-    {{70, 24, 0}, {70, 24, 0}, {20, 130, 85}, {18, 5, 0}},      // 1: dark orange, emerald crests
-    {{55, 40, 80}, {55, 40, 80}, {20, 130, 85}, {14, 8, 24}},   // 2: dark lavender, emerald crests
-    {{28, 20, 40}, {10, 7, 16}, {30, 135, 40}, {5, 3, 9}},      // 3: lavender, lighter center, darker edge, green crests
+    {{255, 255, 255}, {215, 215, 215}, {40, 40, 40}, {150, 150, 150}, {100, 100, 100}}, // white, grey waves
+    {{22, 22, 22}, {0, 0, 0}, {210, 210, 210}, {80, 80, 80}, {130, 130, 130}},          // black, grey waves
+    {{0, 14, 60}, {0, 14, 60}, {20, 130, 85}, {0, 2, 20}, {170, 175, 40}},       // dark blue, emerald crests
+    {{70, 24, 0}, {70, 24, 0}, {20, 130, 85}, {18, 5, 0}, {170, 175, 40}},       // dark orange, emerald crests
+    {{55, 40, 80}, {55, 40, 80}, {20, 130, 85}, {14, 8, 24}, {170, 175, 40}},    // dark lavender, emerald crests
+    {{28, 20, 40}, {10, 7, 16}, {30, 135, 40}, {5, 3, 9}, {170, 175, 40}},       // lavender, lighter center, darker edge, green crests, lemon alt
+    {{255, 248, 170}, {250, 215, 0}, {90, 20, 140}, {0, 90, 30}, {30, 20, 120}}, // light yellow center, intense yellow edge, violet crests, green troughs, indigo alt
 };
+#define PALETTE_COUNT ((int)(sizeof(s_palettes) / sizeof(s_palettes[0])))
+
+static int s_palette = PALETTE_START;
 
 static inline uint8_t clamp_u8(float v)
 {
@@ -115,7 +123,7 @@ static void build_lut(void)
     // Shade is compressed with tanh so strong waves never clip:
     // positive slope blends toward the crest color, negative toward the trough color.
     // Each ring has its own flat color, blended from center to edge.
-    const palette_t *pal = &s_palettes[PALETTE];
+    const palette_t *pal = &s_palettes[s_palette];
     for (int ring = 0; ring < LUT_RINGS; ring++) {
         float e = (float)ring / (LUT_RINGS - 1);
         float base[3];
@@ -139,9 +147,12 @@ static void build_lut(void)
     }
 
     for (int k = 0; k < 3; k++) {
-        s_tint_delta[k] = (int)lrintf(s_crest_alt[k] - pal->light[k]);
+        s_tint_delta[k] = (int)lrintf(pal->alt[k] - pal->light[k]);
     }
+}
 
+static void build_ring_table(void)
+{
     // Ring position (x16, fractional part used by the dither) from squared distance;
     // which follows (r / R)^EDGE_POWER.
     const float R = LCD_H_RES / 2.0f;
@@ -228,6 +239,7 @@ esp_err_t ripple_init(void)
         ESP_RETURN_ON_FALSE(s_lut[i], ESP_ERR_NO_MEM, TAG, "lut");
     }
     build_spans();
+    build_ring_table();
     build_lut();
     BaseType_t ok = xTaskCreatePinnedToCore(worker_task, "ripple_w", 4096, NULL, 5, &s_worker, 0);
     ESP_RETURN_ON_FALSE(ok == pdPASS, ESP_ERR_NO_MEM, TAG, "worker task");
@@ -287,6 +299,15 @@ typedef struct {
 } splash_t;
 
 static splash_t s_splashes[MAX_SPLASHES];
+
+void ripple_set_palette(int step)
+{
+    // Called between frames: the LUT is rewritten in place (no extra RAM)
+    s_palette = ((s_palette + step) % PALETTE_COUNT + PALETTE_COUNT) % PALETTE_COUNT;
+    int64_t t0 = esp_timer_get_time();
+    build_lut();
+    ESP_LOGI(TAG, "palette %d (%d us)", s_palette, (int)(esp_timer_get_time() - t0));
+}
 
 void ripple_drop(int x, int y, int strength, bool splash, float tint)
 {

@@ -10,6 +10,9 @@ esp_err_t ripple_init(void);
 // tint 0..1 selects the crest color between the palette crest and the alternate one.
 void ripple_drop(int x, int y, int strength, bool splash, float tint);
 
+// Moves by step palettes (+1 next, -1 previous, wraps around) without touching the waves.
+void ripple_set_palette(int step);
+
 // Advances the water simulation by one step.
 void ripple_step(void);
 
