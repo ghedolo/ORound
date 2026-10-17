@@ -63,7 +63,7 @@ void ui_create(void)
     lv_obj_remove_flag(ring, LV_OBJ_FLAG_CLICKABLE);
 
     lv_obj_t *title = lv_label_create(scr);
-    lv_label_set_text(title, "ORund");
+    lv_label_set_text(title, "ORound");
     lv_obj_set_style_text_font(title, &lv_font_montserrat_32, 0);
     lv_obj_set_style_text_color(title, lv_color_white(), 0);
     lv_obj_align(title, LV_ALIGN_TOP_MID, 0, 70);
