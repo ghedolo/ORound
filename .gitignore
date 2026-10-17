@@ -10,3 +10,5 @@ managed_components/
 sdkconfig
 sdkconfig.old
 .cache/
+data/
+floor.bin
