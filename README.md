@@ -12,7 +12,7 @@ grid seen through the water surface, bent by the waves (refraction).
 - Board: Waveshare ESP32-S3-Touch-AMOLED-1.32 (ESP32-S3-PICO-1-N8R8, 8 MB flash, 8 MB octal PSRAM)
 - Display: 466x466 AMOLED, CO5300 controller, QSPI at 40 MHz, driven in RGB888 (24 bit)
 - Touch: CST820 on I2C (address 0x15)
-- Buttons: BOOT (GPIO0) cycles the color palettes; PWR (GPIO17) toggles the microphone in `drop_16M_pool_listening`
+- Buttons: BOOT (GPIO0) cycles the color palettes; PWR (GPIO17) toggles the microphone in `drop_16M_pool_listening`, long press powers off in `drop_16M_pool_tiles`
 - Docs: <https://docs.waveshare.com/ESP32-S3-Touch-AMOLED-1.32>
 
 ## Firmware experiments
@@ -28,6 +28,7 @@ Each experiment is a standalone ESP-IDF project under `firmware/`.
 | `drop_16M_grid2x2` | Finer simulation grid (1 cell = 2x2 px), int16 fields, precomputed ring map |
 | `drop_16M_grid2x2_pie` | Wave step in fixed point with ESP32-S3 PIE vector instructions (8 x int16 per instruction) |
 | `drop_16M_pool` | Pool floor grid deformed by refraction, 4 palettes, ~20 fps |
+| `drop_16M_pool_tiles` | Pool with tiles in slightly different azure shades (azure palette); long press PWR powers off (battery) or deep sleeps (USB) |
 | `drop_16M_pool_listening` | Pool that listens: microphone (ES8311) sound level ripples the water with small random drops; PWR toggles the microphone |
 
 ### How the simulation works
@@ -74,12 +75,12 @@ Figures extracted from the local Claude Code session transcripts of this project
 | Metric | Value |
 |---|---|
 | First message (UTC) | 2026-10-16 19:12 |
-| Last message (UTC) | 2026-10-17 10:29 |
+| Last message (UTC) | 2026-10-17 10:45 |
 | Calendar span | 2 days |
-| Commits | 10 |
+| Commits | 12 |
 | Sessions | 2 |
-| Messages (user + assistant) | 415 (86 + 329) |
-| Active time | ~3.18 h |
+| Messages (user + assistant) | 438 (90 + 348) |
+| Active time | ~3.36 h |
 
 Active time is the sum of the gaps between consecutive messages (user and assistant,
 sorted by timestamp) that are at most 5 minutes long. Longer gaps are treated as pauses
@@ -88,17 +89,17 @@ build and flash waits shorter than 5 minutes.
 
 | Tokens | Count |
 |---|---|
-| Input (non-cache) | 658 |
-| Output | 258,341 |
-| Cache write | 711,490 |
-| Cache read | 52,119,838 |
-| Total | 53,090,327 |
+| Input (non-cache) | 696 |
+| Output | 271,853 |
+| Cache write | 733,143 |
+| Cache read | 57,737,168 |
+| Total | 58,742,860 |
 
 Cache read tokens are the conversation context re-sent to the model at every turn and
 served from the prompt cache; they are by far the largest share but are billed at a
 fraction of the normal input price.
 
 **Caveman mode.** Both sessions ran with Caveman mode active (terse responses).
-Average output was 785 tokens per assistant message (258,341 output tokens in total).
+Average output was 781 tokens per assistant message (271,853 output tokens in total).
 No session without Caveman mode exists in this project, so no comparison with
 standard mode is available.
