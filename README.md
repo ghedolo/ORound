@@ -75,7 +75,7 @@ Figures extracted from the local Claude Code session transcripts of this project
 | First message (UTC) | 2026-10-16 19:12 |
 | Last message (UTC) | 2026-10-17 08:37 |
 | Calendar span | 2 days |
-| Commits | 2 |
+| Commits | 8 |
 | Sessions | 2 |
 | Messages (user + assistant) | 371 (80 + 291) |
 | Active time | ~2.95 h |
