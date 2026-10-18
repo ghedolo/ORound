@@ -30,8 +30,10 @@ Each experiment is a standalone ESP-IDF project under `firmware/`.
 | `drop1_16M_pool_tiles` | Pool floor grid deformed by refraction, with tiles in slightly different azure shades (azure palette); long press PWR powers off (battery) or deep sleeps (USB) |
 | `drop1_16M_pool_image` | Pool floor from an image: coverage mask drawn with the palette, full color image, or animated GIF (frames switched in time); microphone ripples |
 | `drop1_16M_pool_crystal` | Frozen copy of `drop1_16M_pool_image` with a rotating crystal animation on a dark green background (`--anim --step=2 --bg=198919`, 466 px); wider drops and lit crests so waves show on the uniform background |
+| `drop1_16M_pool_image_bufalini` | Frozen copy of `drop1_16M_pool_image` with a full color photo as floor (`--rgb`, 514 px; third-party artwork by Paolo Bufalini, `floor.bin` not in the repository); microphone with fixed reference (-55 dBFS, first drop at ~-52 dBFS, background adaptation commented out) |
 | `drop1_16M_pool_listening` | Pool floor grid deformed by refraction (4 palettes, ~20 fps) that listens: microphone (ES8311) sound level ripples the water with small random drops; PWR toggles the microphone |
 | `empty2` | Empty skeleton for new experiments: solid background, touch, microphone, brightness control; PWR short press toggles the microphone, long press powers off; BOOT free for a new use |
+| `life1_conway` | Conway's Game of Life, 24 px cells (19x19 grid) inside the circle, one generation every 3 s; each changing cell fades its color (two-stage filter, slow start and end, ~3 s) starting in a random one of 10 time slots (300 ms apart); newborn orange turning blue with age; touch adds cells, BOOT new seed, automatic new seed on still or empty states |
 
 ### Microphone
 
@@ -106,12 +108,12 @@ Figures extracted from the local Claude Code session transcripts of this project
 | Metric | Value |
 |---|---|
 | First message (UTC) | 2026-10-16 19:12 |
-| Last message (UTC) | 2026-10-18 09:01 |
+| Last message (UTC) | 2026-10-18 15:11 |
 | Calendar span | 3 days |
-| Commits | 17 |
-| Sessions | 3 |
-| Messages (user + assistant) | 584 (114 + 470) |
-| Active time | ~4.55 h |
+| Commits | 22 |
+| Sessions | 4 |
+| Messages (user + assistant) | 701 (135 + 566) |
+| Active time | ~5.45 h |
 
 Active time is the sum of the gaps between consecutive messages (user and assistant,
 sorted by timestamp) that are at most 5 minutes long. Longer gaps are treated as pauses
@@ -120,17 +122,17 @@ build and flash waits shorter than 5 minutes.
 
 | Tokens | Count |
 |---|---|
-| Input (non-cache) | 940 |
-| Output | 347,354 |
-| Cache write | 1,208,616 |
-| Cache read | 88,395,262 |
-| Total | 89,952,172 |
+| Input (non-cache) | 1,132 |
+| Output | 399,369 |
+| Cache write | 1,380,409 |
+| Cache read | 98,210,567 |
+| Total | 99,991,477 |
 
 Cache read tokens are the conversation context re-sent to the model at every turn and
 served from the prompt cache; they are by far the largest share but are billed at a
 fraction of the normal input price.
 
-**Caveman mode.** All three sessions ran with Caveman mode active (terse responses).
-Average output was 739 tokens per assistant message (347,354 output tokens in total).
+**Caveman mode.** All four sessions ran with Caveman mode active (terse responses).
+Average output was 706 tokens per assistant message (399,369 output tokens in total).
 No session without Caveman mode exists in this project, so no comparison with
 standard mode is available.
