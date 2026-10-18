@@ -16,8 +16,10 @@
 #define MIC_BLOCK       256         // samples per measurement (16 ms)
 #define MIC_GAIN_DB     30.0f
 #define FLOOR_RISE      0.002f      // background noise estimate: slow rise per block
-#define LEVEL_START_DB  8.0f        // dB above the background where the level starts
-#define LEVEL_FULL_DB   30.0f       // dB above the background for level 1
+#define LEVEL_START_DB  6.0f        // dB above the background where the level starts (first drop ~+7 dB)
+#define LEVEL_FULL_DB   28.0f       // dB above the background for level 1
+#define FLOOR_MIN_DB    -40.0f      // background estimate never below this: first drop at ~-33 dBFS
+#define FLOOR_MAX_DB    -20.0f      // background estimate never above this: loud places still give drops
 #define LEVEL_RELEASE   0.92f       // per block decay of the level after a sound
 #define STARTUP_BLOCKS  32          // blocks ignored after start (codec power-up click), ~0.5 s
 
@@ -58,15 +60,16 @@ static void mic_task(void *arg)
         // Background noise: follows quiet levels immediately, rises slowly
         if (db < floor_db) floor_db = db;
         else floor_db += (db - floor_db) * FLOOR_RISE;
+        float ref_db = floor_db < FLOOR_MIN_DB ? FLOOR_MIN_DB : floor_db > FLOOR_MAX_DB ? FLOOR_MAX_DB : floor_db;
 
-        float x = (db - floor_db - LEVEL_START_DB) / (LEVEL_FULL_DB - LEVEL_START_DB);
+        float x = (db - ref_db - LEVEL_START_DB) / (LEVEL_FULL_DB - LEVEL_START_DB);
         x = x < 0 ? 0 : x > 1 ? 1 : x;
         level = x > level ? x : level * LEVEL_RELEASE;
         s_level = level;
 
         if (db > peak_db) peak_db = db;
         if (++blocks * MIC_BLOCK >= MIC_RATE * 2) {
-            ESP_LOGI(TAG, "peak %.1f dB, background %.1f dB, level %.2f", peak_db, floor_db, level);
+            ESP_LOGI(TAG, "peak %.1f dB, background %.1f dB (ref %.1f), level %.2f", peak_db, floor_db, ref_db, level);
             peak_db = -120.0f;
             blocks = 0;
         }

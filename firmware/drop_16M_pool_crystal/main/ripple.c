@@ -27,8 +27,8 @@
 #define WAVE_C2        0.45f      // (wave speed)^2 in cells/step, stability limit 0.5; ~1.34 px/step (scale 3 had 1.41)
 #define DAMPING        (1.0f - 1.0f / 64.0f)   // per step energy loss, closer to 1 = longer ripples
 #define VISCOSITY      (1.0f / 32.0f)          // pull toward local average, damps short waves more
-#define DROP_RADIUS_PX 3.5f   // min ~3 (1.5 cells), smaller bumps miss the grid
-#define REBOUND_RADIUS_PX 3.0f
+#define DROP_RADIUS_PX 7.0f   // min ~3 (1.5 cells), smaller bumps miss the grid; larger = wider rings
+#define REBOUND_RADIUS_PX 6.0f
 #define MAX_SPLASHES   8
 
 // Pool floor: an image seen through the water. Each pixel samples the floor at
@@ -40,6 +40,11 @@
 #define MASK_BILINEAR  0               // 1: bilinear read (smoother edges, slower), 0: nearest pixel
 #define REFRACT_PX     0.020f          // floor shift in px per unit of stored slope
 #define MAX_SHIFT_PX   24              // shift clamp
+#define CREST_GAIN     58              // image modes: crest light per 1/SUB px of shift toward the light (Q8 x 16)
+#define CREST_MAX      158             // light clamp (Q8, 256 = full highlight / black)
+#define CREST_R        235             // highlight color mixed into crests
+#define CREST_G        255
+#define CREST_B        235
 #define SUB            16              // sub-pixel units per pixel for the floor lookup
 #define COVER_LEVELS   (SUB + 1)       // figure coverage 0..SUB
 #define INTERP         (SCALE * SCALE) // bilinear weights sum
@@ -569,6 +574,26 @@ static IRAM_ATTR int shift_row(render_ctx_t *ctx, int gy)
     return slot;
 }
 
+// Image modes: crests facing the light (top left) mix toward the highlight color,
+// the opposite slopes toward black at half strength
+static inline pixel_t crest_shade(pixel_t c, int dx, int dy)
+{
+    int l = -(dx + dy) * CREST_GAIN / 16;
+    if (l > CREST_MAX) l = CREST_MAX;
+    if (l < -CREST_MAX) l = -CREST_MAX;
+    if (l > 0) {
+        c.r += ((CREST_R - c.r) * l) >> 8;
+        c.g += ((CREST_G - c.g) * l) >> 8;
+        c.b += ((CREST_B - c.b) * l) >> 8;
+    } else if (l < 0) {
+        int k = 256 + l / 2;
+        c.r = (c.r * k) >> 8;
+        c.g = (c.g * k) >> 8;
+        c.b = (c.b * k) >> 8;
+    }
+    return c;
+}
+
 // Renders display rows y_from..y_to into band (whose first row is band_y0)
 static IRAM_ATTR void render_rows(render_ctx_t *ctx, pixel_t *band, int band_y0, int y_from, int y_to)
 {
@@ -612,14 +637,16 @@ static IRAM_ATTR void render_rows(render_ctx_t *ctx, pixel_t *band, int band_y0,
                 // Animation mode: nearest pixel of the current frame, background outside it
                 unsigned au = (unsigned)(su + SUB / 2) / SUB - s_anim_x0;
                 unsigned av = (unsigned)(sv + SUB / 2) / SUB - s_anim_y0;
-                row[px] = (au < (unsigned)s_anim_w && av < (unsigned)s_anim_h)
-                              ? s_anim_pal[s_anim_frame[av * s_anim_w + au]]
-                              : s_anim_bg;
+                row[px] = crest_shade((au < (unsigned)s_anim_w && av < (unsigned)s_anim_h)
+                                          ? s_anim_pal[s_anim_frame[av * s_anim_w + au]]
+                                          : s_anim_bg,
+                                      dx, dy);
                 continue;
             }
             if (s_floor_rgb) {
                 // Color mode: nearest pixel of the image, no palette
-                row[px] = s_floor_rgb[((unsigned)(sv + SUB / 2) / SUB) * MASK_SIZE + (unsigned)(su + SUB / 2) / SUB];
+                row[px] = crest_shade(
+                    s_floor_rgb[((unsigned)(sv + SUB / 2) / SUB) * MASK_SIZE + (unsigned)(su + SUB / 2) / SUB], dx, dy);
                 continue;
             }
             unsigned mu = (unsigned)su / SUB - s_mask_x0;

@@ -20,6 +20,7 @@ static esp_lcd_panel_handle_t s_panel;
 static SemaphoreHandle_t s_free_bands;
 static pixel_t *s_bands[PANEL_BAND_COUNT];
 static int s_next_band;
+static uint8_t s_brightness = 255;
 
 // CO5300 init sequence (from Waveshare demo)
 static const sh8601_lcd_init_cmd_t s_init_cmds[] = {
@@ -45,6 +46,7 @@ static void panel_write_reg(uint8_t reg, uint8_t value)
 
 void panel_set_brightness(uint8_t level)
 {
+    s_brightness = level;
     panel_write_reg(0x51, level);
 }
 
@@ -54,8 +56,8 @@ void panel_off(void)
     for (int i = 0; i < PANEL_BAND_COUNT; i++) {
         panel_band_acquire();
     }
-    for (int level = 255; level >= 0; level -= 15) {
-        panel_set_brightness((uint8_t)level);
+    for (int level = s_brightness; level >= 0; level -= 15) {
+        panel_write_reg(0x51, (uint8_t)level);
         vTaskDelay(pdMS_TO_TICKS(15));
     }
     esp_lcd_panel_disp_on_off(s_panel, false);
