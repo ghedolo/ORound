@@ -9,11 +9,10 @@
 #include "panel.h"
 #include "life.h"
 #include "touch_cst820.h"
-#include "mic.h"
 #include "nvs.h"
 #include "nvs_flash.h"
 
-#define PWR_HOLD_US       1500000   // PWR held this long: power off; shorter press: microphone on/off
+#define PWR_HOLD_US       1500000   // PWR held this long: power off
 #define KEY_DEBOUNCE_US   150000
 #define BRIGHT_HOLD_US    800000    // finger held still this long: brightness mode until release
 #define BRIGHT_STILL_D2   (15 * 15) // max movement while holding still
@@ -137,18 +136,12 @@ static void on_boot_key(void)
     life_randomize();
 }
 
-// Sound level 0..1 for this frame (0 when the microphone is off)
-static void on_sound(float level)
-{
-}
-
 static void main_task(void *arg)
 {
     // PWR is active low. It may still be held from the power-on press,
     // so a hold counts only after the button has been released once.
     bool pwr_armed = false;
     int64_t pwr_down_us = 0;
-    bool mic_on = true;
     bool was_pressed = false;
     int down_x = 0, down_y = 0;     // touch-down point
     int64_t down_us = 0;
@@ -202,21 +195,15 @@ static void main_task(void *arg)
         }
         was_pressed = pressed;
 
-        // PWR: long press powers off, short press (released before PWR_HOLD_US) toggles the microphone
+        // PWR: long press powers off
         bool pwr_down = gpio_get_level(PWR_PIN_KEY) == 0;
         if (!pwr_down) {
-            if (pwr_armed && pwr_down_us != 0 && now - pwr_down_us > KEY_DEBOUNCE_US / 3) {
-                mic_on = !mic_on;
-                ESP_LOGI(TAG, "microphone %s", mic_on ? "on" : "off");
-            }
             pwr_armed = true;
             pwr_down_us = 0;
         } else if (pwr_armed) {
             if (pwr_down_us == 0) pwr_down_us = now;
             else if (now - pwr_down_us > PWR_HOLD_US) power_off();
         }
-
-        on_sound(mic_on ? mic_level() : 0);
 
         if (key_pressed(&s_boot_key, now)) {
             on_boot_key();
@@ -251,9 +238,6 @@ void app_main(void)
     ESP_ERROR_CHECK(panel_init());
     brightness_load();
     ESP_ERROR_CHECK(touch_init());
-    if (mic_init(touch_bus()) != ESP_OK) {
-        ESP_LOGW(TAG, "microphone not available, running without sound input");
-    }
     key_init(&s_boot_key, true);
     gpio_config_t pwr_cfg = {.pin_bit_mask = 1ULL << PWR_PIN_KEY, .mode = GPIO_MODE_INPUT};
     gpio_config(&pwr_cfg);
