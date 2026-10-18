@@ -13,7 +13,7 @@ grid or an image seen through the water surface, bent by the waves (refraction).
 - Display: 466x466 AMOLED, CO5300 controller, QSPI at 40 MHz, driven in RGB888 (24 bit)
 - Touch: CST820 on I2C (address 0x15)
 - Brightness (all experiments): hold a finger still for 0.8 s, then drag up (brighter) or down (darker) without lifting; the value is saved in NVS and restored at boot
-- Buttons: BOOT (GPIO0) cycles the color palettes; PWR (GPIO17) toggles the microphone in `drop1_16M_pool_listening`, long press powers off in `drop1_16M_pool_tiles`; in `drop1_16M_pool_image` / `drop1_16M_pool_crystal` a short press toggles the microphone and a long press powers off (same in `empty2`, where BOOT has no action yet)
+- Buttons: BOOT (GPIO0) cycles the color palettes; PWR (GPIO17) toggles the microphone in `drop1_16M_pool_listening`, long press powers off in `drop1_16M_pool_tiles`; in `drop1_16M_pool_image` / `drop1_16M_pool_crystal` a short press toggles the microphone and a long press powers off (same in `empty2`, where BOOT has no action yet); in `life1_*` BOOT is a new seed (`life1_conway`) or the next tile size (`life1_penrose`), PWR long press powers off
 - Docs: <https://docs.waveshare.com/ESP32-S3-Touch-AMOLED-1.32>
 
 ## Firmware experiments
@@ -33,7 +33,8 @@ Each experiment is a standalone ESP-IDF project under `firmware/`.
 | `drop1_16M_pool_image_bufalini` | Frozen copy of `drop1_16M_pool_image` with a full color photo as floor (`--rgb`, 514 px; third-party artwork by Paolo Bufalini, `floor.bin` not in the repository); microphone with fixed reference (-55 dBFS, first drop at ~-52 dBFS, background adaptation commented out) |
 | `drop1_16M_pool_listening` | Pool floor grid deformed by refraction (4 palettes, ~20 fps) that listens: microphone (ES8311) sound level ripples the water with small random drops; PWR toggles the microphone |
 | `empty2` | Empty skeleton for new experiments: solid background, touch, microphone, brightness control; PWR short press toggles the microphone, long press powers off; BOOT free for a new use |
-| `life1_conway` | Conway's Game of Life, 24 px cells (19x19 grid) inside the circle, one generation every 3 s; each changing cell fades its color (two-stage filter, slow start and end, ~3 s) starting in a random one of 10 time slots (300 ms apart); newborn orange turning blue with age; touch adds cells, BOOT new seed, automatic new seed on still or empty states |
+| `life1_conway` | Conway's Game of Life, 24 px cells (19x19 grid) inside the circle, one generation every 3 s; each changing cell fades its color (two-stage filter, slow start and end, ~3 s) starting in a random one of 10 time slots (300 ms apart); newborn orange turning blue with age; touch adds cells, BOOT new seed, automatic new seed on still or empty states; no microphone, PWR long press powers off |
+| `life1_penrose` | Game of Life (B3/S23) on a Penrose rhombus tiling (P3) built on the device by deflation; neighbors = tiles sharing a vertex (4..11); tiles without gap, two dark shades for thin/thick rhombi, black border from 18 px; BOOT cycles the tile edge (8, 11, 14, 18, 24, 32, 40, 48, 56, 64 px, shown on the serial log); generation 4 s and fade time constant 1.1 s up to 14 px, longer for larger tiles (x2.4 at 48 px); live colors by age orange, yellow, bright green; no microphone |
 
 ### Microphone
 
@@ -108,12 +109,12 @@ Figures extracted from the local Claude Code session transcripts of this project
 | Metric | Value |
 |---|---|
 | First message (UTC) | 2026-10-16 19:12 |
-| Last message (UTC) | 2026-10-18 15:11 |
+| Last message (UTC) | 2026-10-18 16:36 |
 | Calendar span | 3 days |
-| Commits | 22 |
+| Commits | 24 |
 | Sessions | 4 |
-| Messages (user + assistant) | 701 (135 + 566) |
-| Active time | ~5.45 h |
+| Messages (user + assistant) | 764 (150 + 614) |
+| Active time | ~6.04 h |
 
 Active time is the sum of the gaps between consecutive messages (user and assistant,
 sorted by timestamp) that are at most 5 minutes long. Longer gaps are treated as pauses
@@ -122,17 +123,17 @@ build and flash waits shorter than 5 minutes.
 
 | Tokens | Count |
 |---|---|
-| Input (non-cache) | 1,132 |
-| Output | 399,369 |
-| Cache write | 1,380,409 |
-| Cache read | 98,210,567 |
-| Total | 99,991,477 |
+| Input (non-cache) | 1,228 |
+| Output | 436,553 |
+| Cache write | 1,429,756 |
+| Cache read | 106,590,379 |
+| Total | 108,457,916 |
 
 Cache read tokens are the conversation context re-sent to the model at every turn and
 served from the prompt cache; they are by far the largest share but are billed at a
 fraction of the normal input price.
 
 **Caveman mode.** All four sessions ran with Caveman mode active (terse responses).
-Average output was 706 tokens per assistant message (399,369 output tokens in total).
+Average output was 711 tokens per assistant message (436,553 output tokens in total).
 No session without Caveman mode exists in this project, so no comparison with
 standard mode is available.
