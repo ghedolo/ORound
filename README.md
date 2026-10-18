@@ -74,9 +74,12 @@ The serial log prints frames per second and the time of the simulation step and 
 
 `drop1_16M_pool_image` and `drop1_16M_pool_crystal` embed `main/floor.bin`, produced by
 `scripts/make_mask.py` (Pillow, run in the project `.venv`). The file is not in the
-repository (third-party images); generate it before building, for example:
+repository (third-party images). Without it the build uses the placeholder
+`assets/floor_placeholder.bin` (coverage mask made from `assets/PH.png`, 480 px); the
+check runs again when `floor.bin` is added or removed. Generate your own, for example:
 
 ```
+python scripts/make_mask.py assets/PH.png assets/floor_placeholder.bin 480   # the placeholder
 python scripts/make_mask.py figure.png firmware/drop1_16M_pool_image/main/floor.bin 400
 python scripts/make_mask.py photo.jpg  firmware/drop1_16M_pool_image/main/floor.bin 514 --rgb --crop=x0,y0,x1,y1
 python scripts/make_mask.py anim.gif   firmware/drop1_16M_pool_image/main/floor.bin 466 --anim --step=2 --bg=23c423
@@ -88,7 +91,7 @@ The firmware detects the mode from the file: coverage mask (514x514 bytes), RGB8
 ## License
 
 - Code: GPL-3.0-or-later
-- Image: CC BY-SA 4.0
+- Image (including `assets/PH.png` and `assets/floor_placeholder.bin`): CC BY-SA 4.0
 
 ## Author
 
