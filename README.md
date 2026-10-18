@@ -12,6 +12,7 @@ grid seen through the water surface, bent by the waves (refraction).
 - Board: Waveshare ESP32-S3-Touch-AMOLED-1.32 (ESP32-S3-PICO-1-N8R8, 8 MB flash, 8 MB octal PSRAM)
 - Display: 466x466 AMOLED, CO5300 controller, QSPI at 40 MHz, driven in RGB888 (24 bit)
 - Touch: CST820 on I2C (address 0x15)
+- Brightness (all experiments except `01_lvgl_touch`): hold a finger still for 0.8 s, then drag up (brighter) or down (darker) without lifting; the value is saved in NVS and restored at boot
 - Buttons: BOOT (GPIO0) cycles the color palettes; PWR (GPIO17) toggles the microphone in `drop_16M_pool_listening`, long press powers off in `drop_16M_pool_tiles`; in `drop_16M_pool_image` / `drop_16M_pool_crystal` a short press toggles the microphone and a long press powers off
 - Docs: <https://docs.waveshare.com/ESP32-S3-Touch-AMOLED-1.32>
 
@@ -30,8 +31,17 @@ Each experiment is a standalone ESP-IDF project under `firmware/`.
 | `drop_16M_pool` | Pool floor grid deformed by refraction, 4 palettes, ~20 fps |
 | `drop_16M_pool_tiles` | Pool with tiles in slightly different azure shades (azure palette); long press PWR powers off (battery) or deep sleeps (USB) |
 | `drop_16M_pool_image` | Pool floor from an image: coverage mask drawn with the palette, full color image, or animated GIF (frames switched in time); microphone ripples |
-| `drop_16M_pool_crystal` | Frozen copy of `drop_16M_pool_image` with a rotating crystal animation on a dark green background (`--anim --step=2 --bg=198919`, 466 px) |
+| `drop_16M_pool_crystal` | Frozen copy of `drop_16M_pool_image` with a rotating crystal animation on a dark green background (`--anim --step=2 --bg=198919`, 466 px); wider drops and lit crests so waves show on the uniform background |
 | `drop_16M_pool_listening` | Pool that listens: microphone (ES8311) sound level ripples the water with small random drops; PWR toggles the microphone |
+
+### Microphone
+
+In `drop_16M_pool_listening`, `drop_16M_pool_image` and `drop_16M_pool_crystal` the
+ES8311 records 16 kHz mono with 30 dB gain; the RMS level of each 16 ms block is compared
+with an estimate of the background noise. The estimate is clamped to -40..-20 dBFS:
+in a quiet room the first drop comes at about -33 dBFS, and in loud places continuous
+noise raises the reference only up to -20 dBFS, so sounds still make drops.
+The serial log prints peak, background and reference level every 2 s.
 
 ### How the simulation works
 
@@ -45,6 +55,8 @@ Each experiment is a standalone ESP-IDF project under `firmware/`.
   version each pixel samples the grid at its position shifted by the local slope
   (x and y separately, 1/16 px resolution). Grid lines have a full core plus soft edges
   blended in emitted light (gamma 2.2).
+- In the image and animation floors the slope also shades the water: slopes facing the
+  light (top left) mix toward a light green, the opposite slopes darken.
 - The frame is sent in bands of 16 lines with two DMA buffers; both cores render half of each band.
 
 ## Build and flash
@@ -92,12 +104,12 @@ Figures extracted from the local Claude Code session transcripts of this project
 | Metric | Value |
 |---|---|
 | First message (UTC) | 2026-10-16 19:12 |
-| Last message (UTC) | 2026-10-17 21:58 |
-| Calendar span | 2 days |
-| Commits | 15 |
-| Sessions | 2 |
-| Messages (user + assistant) | 515 (102 + 413) |
-| Active time | ~3.98 h |
+| Last message (UTC) | 2026-10-18 09:01 |
+| Calendar span | 3 days |
+| Commits | 17 |
+| Sessions | 3 |
+| Messages (user + assistant) | 584 (114 + 470) |
+| Active time | ~4.55 h |
 
 Active time is the sum of the gaps between consecutive messages (user and assistant,
 sorted by timestamp) that are at most 5 minutes long. Longer gaps are treated as pauses
@@ -106,17 +118,17 @@ build and flash waits shorter than 5 minutes.
 
 | Tokens | Count |
 |---|---|
-| Input (non-cache) | 826 |
-| Output | 321,006 |
-| Cache write | 1,124,172 |
-| Cache read | 80,084,173 |
-| Total | 81,530,177 |
+| Input (non-cache) | 940 |
+| Output | 347,354 |
+| Cache write | 1,208,616 |
+| Cache read | 88,395,262 |
+| Total | 89,952,172 |
 
 Cache read tokens are the conversation context re-sent to the model at every turn and
 served from the prompt cache; they are by far the largest share but are billed at a
 fraction of the normal input price.
 
-**Caveman mode.** Both sessions ran with Caveman mode active (terse responses).
-Average output was 777 tokens per assistant message (321,006 output tokens in total).
+**Caveman mode.** All three sessions ran with Caveman mode active (terse responses).
+Average output was 739 tokens per assistant message (347,354 output tokens in total).
 No session without Caveman mode exists in this project, so no comparison with
 standard mode is available.
