@@ -1,4 +1,4 @@
-"""Converts an image into the pool floor file for drop_16M_pool_image.
+"""Converts an image into the pool floor file for drop1_16M_pool_image.
 
 The image is scaled to the given width and centered on a square of MASK_SIZE x MASK_SIZE
 pixels (the display plus a margin for the refraction shift).
