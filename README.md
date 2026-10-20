@@ -46,7 +46,7 @@ Each experiment is a standalone ESP-IDF project under `firmware/`.
 | `life1_ts9` | Game of Life (B3/S23) on the isometric tiling of `data/tassel/fake-3d4.jpg` (3D look in three shades): white, light gray and dark gray L pieces (10 triangles) and single rhombi (2 triangles), period lattice (5, 3), (-4, 6) (mirror of `fake_3d1`), 9 tiles per period; 8 neighbors per L piece, 7 per rhombus; dead cells only blue and gray tones, live colors scaled per shade (1.0, 0.8, 0.6); no black border; BOOT cycles the rhombus side (6..40 px, default 14); no microphone |
 | `life1_ts10` | Game of Life (B3/S23) on the curved tiles of `data/tassel/hexTongue.jpg` (the hexagon is only a frame): one tile shape with 180 degree symmetry, averaged over the 12 complete tiles of the image, in three orientations 120 degrees apart on a hexagonal lattice; outline of 60 points; neighbors = outlines closer than 1/10 of the spacing (4 along the sides + 6 around the small holes at the swirl points = 10, as in the image); pixel map with 2 fill passes, no black line between tiles; dead cells blue and gray tones; BOOT cycles the lattice spacing (24..140 px, default 37; build about 4 s); no microphone |
 | `life1_ts11` | Game of Life (B2/S23) on the isometric tiling of `data/tassel/fake_3d5.jpg` (3D look, three grays and white, no outlines: tiles = same-color regions): rhombic frames with a hole (outer and inner outline joined by a zero-width cut), small pieces of 3 and 5 triangles and white triangles; period lattice (0, 10), (15, 5) on a grid with horizontal sides, 21 tiles per period; T-junction points added as vertices so tiles touching along a side share vertices; neighbors 3 (triangles), 5 (pieces), 16 (frames); dead cells blue and gray, live colors scaled per shade; no black border; BOOT cycles the triangle side (6..40 px, default 12); no microphone |
-| `life1_ts12` | Game of Life (B3/S23) on a Penrose kite and dart tiling (P2), recognized in `data/tassel/darts_and_kites_ii.png` from the tile angles; built on the device by deflation of half kites and half darts from a sun of 5 kites (rules found by testing the 64 variants of split position and half orientation: the only ones where all halves pair into kites and darts), halves paired on their axis; 425 tiles at 28 px long edge, neighbors 4..10; non-convex darts rasterized with the crossing test; black border from 18 px; dead cells two blue tones; BOOT cycles the long edge (12..80 px); no microphone |
+| `life1_ts12` | Game of Life (B3/S23) on a Penrose kite and dart tiling (P2), recognized in `data/tassel/darts_and_kites_ii.png` from the tile angles; built on the device by deflation of half kites and half darts from a sun of 5 kites placed at a random point up to 3 display radii from the center (another part of the non periodic tiling at every boot and BOOT) (rules found by testing the 64 variants of split position and half orientation: the only ones where all halves pair into kites and darts), halves paired on their axis; 425 tiles at 28 px long edge, neighbors 4..10; non-convex darts rasterized with the crossing test; black border from 18 px; dead cells two blue tones; BOOT cycles the long edge (12..80 px); no microphone |
 
 ### Game of Life previews
 
@@ -134,12 +134,12 @@ Figures extracted from the local Claude Code session transcripts of this project
 | Metric | Value |
 |---|---|
 | First message (UTC) | 2026-10-16 19:12 |
-| Last message (UTC) | 2026-10-20 20:56 |
+| Last message (UTC) | 2026-10-20 21:02 |
 | Calendar span | 5 days |
-| Commits | 26 |
+| Commits | 28 |
 | Sessions | 5 |
-| Messages (user + assistant) | 1107 (179 + 928) |
-| Active time | ~8.20 h |
+| Messages (user + assistant) | 1123 (183 + 940) |
+| Active time | ~8.29 h |
 
 Active time is the sum of the gaps between consecutive messages (user and assistant,
 sorted by timestamp) that are at most 5 minutes long. Longer gaps are treated as pauses
@@ -148,17 +148,17 @@ build and flash waits shorter than 5 minutes.
 
 | Tokens | Count |
 |---|---|
-| Input (non-cache) | 1,856 |
-| Output | 862,813 |
-| Cache write | 2,075,364 |
-| Cache read | 215,869,407 |
-| Total | 218,809,440 |
+| Input (non-cache) | 1,880 |
+| Output | 871,354 |
+| Cache write | 2,089,730 |
+| Cache read | 223,920,052 |
+| Total | 226,883,016 |
 
 Cache read tokens are the conversation context re-sent to the model at every turn and
 served from the prompt cache; they are by far the largest share but are billed at a
 fraction of the normal input price.
 
 **Caveman mode.** All five sessions ran with Caveman mode active (terse responses).
-Average output was 930 tokens per assistant message (862,813 output tokens in total).
+Average output was 927 tokens per assistant message (871,354 output tokens in total).
 No session without Caveman mode exists in this project, so no comparison with
 standard mode is available.
