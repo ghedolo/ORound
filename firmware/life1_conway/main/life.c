@@ -8,7 +8,7 @@
 #include "esp_random.h"
 #include "panel.h"
 
-#define CELL           24                   // cell size in px
+#define CELL           20                   // cell size in px
 #define GRID           (LCD_H_RES / CELL)   // cells per side
 #define ORIGIN         ((LCD_H_RES - GRID * CELL) / 2)
 #define GEN_US         3000000              // time between generations

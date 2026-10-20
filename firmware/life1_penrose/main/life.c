@@ -30,7 +30,7 @@
 // Tile edge lengths in px, BOOT cycles through them
 static const int EDGE_PX[] = {8, 11, 14, 18, 24, 32, 40, 48, 56, 64};
 #define EDGE_COUNT     (int)(sizeof(EDGE_PX) / sizeof(EDGE_PX[0]))
-#define EDGE_DEFAULT   2
+#define EDGE_DEFAULT   4
 #define BORDER_FROM_PX 18                   // from this edge length on, tiles get a black border
 #define BORDER_DIV     32.0f                // border inset per tile = edge / BORDER_DIV (line = twice that)
 #define BORDER_MIN     0.55f                // smallest inset per tile in px
