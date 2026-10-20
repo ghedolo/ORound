@@ -11,7 +11,7 @@ Descrizione completa del comportamento del firmware, sufficiente per rifarlo.
 - Tempi in secondi; il firmware misura il tempo in microsecondi dall'accensione.
 - "Numero casuale" = numero uniforme in [0, 1] dal generatore hardware, senza seme fisso: ogni accensione è diversa.
 - "Centro di una tessera" = media dei suoi vertici.
-- Valori di partenza: lato lungo 28 px (2,02 mm), 425 tessere. BOOT cambia la dimensione (vedi "Pulsanti").
+- Valori di partenza: lato lungo 28 px (2,02 mm), circa 430 tessere; la parte di tassellatura mostrata cambia a ogni costruzione. BOOT cambia la dimensione (vedi "Pulsanti").
 
 ## Tessere
 
@@ -21,8 +21,8 @@ Tassellatura di Penrose ad aquiloni e dardi (P2), riconosciuta in `data/tassel/d
    - mezzo aquilone (A, B, C): A = punta (angolo 36 gradi), B = angolo laterale, C = fine dell'asse; |AB| = |AC| = lato lungo, |BC| = lato corto = lato lungo / phi;
    - mezzo dardo (A, B, C): A = naso (36 gradi), B = punta dell'ala, C = incavo; |AB| = lato lungo, |AC| = |BC| = lato corto.
    Le due metà di una tessera hanno in comune l'asse AC e sono una lo specchio dell'altra.
-2. Numero di suddivisioni n = il più piccolo intero tale che L x phi^n sia almeno 233 / cos(18 gradi) + 2 L. Raggio iniziale r = L x phi^n. Con L = 28: n = 5.
-3. Inizio: un sole di 5 aquiloni, cioè 10 mezzi aquiloni con la punta A nel centro (0, 0). Per i da 0 a 9, con Z0 = r (cos(36 i), sin(36 i)) e Z1 = r (cos(36 (i + 1)), sin(36 (i + 1))): se i è pari B = Z0 e C = Z1, altrimenti B = Z1 e C = Z0.
+2. Centro del sole iniziale S, scelto a caso a ogni costruzione (accensione e BOOT): con due numeri casuali u e w, distanza s = 699 x radice di u (699 = 3 x 233, distribuzione uniforme nel disco) e direzione 360 w gradi; S = s (cos, sin) di quella direzione. Così ogni volta si vede un'altra parte della tassellatura, che non si ripete mai. Numero di suddivisioni n = il più piccolo intero tale che L x phi^n sia almeno (s + 233) / cos(18 gradi) + 2 L. Raggio iniziale r = L x phi^n. Con L = 28: n da 5 (sole vicino al centro) a 8.
+3. Inizio: un sole di 5 aquiloni, cioè 10 mezzi aquiloni con la punta A in S. Per i da 0 a 9, con Z0 = S + r (cos(36 i), sin(36 i)) e Z1 = S + r (cos(36 (i + 1)), sin(36 (i + 1))): se i è pari B = Z0 e C = Z1, altrimenti B = Z1 e C = Z0.
 4. Una suddivisione sostituisce ogni mezza tessera:
    - mezzo dardo (A, B, C): P = A + (B - A) / phi; diventa il mezzo aquilone (A, P, C) e il mezzo dardo (B, C, P);
    - mezzo aquilone (A, B, C): P = A + (C - A) / phi; il triangolo (B, A, P) è un mezzo dardo e si divide subito come sopra (dà il mezzo aquilone (B, Q, P) e il mezzo dardo (A, P, Q) con Q = B + (A - B) / phi); in più il mezzo aquilone (B, C, P).
@@ -30,7 +30,7 @@ Tassellatura di Penrose ad aquiloni e dardi (P2), riconosciuta in `data/tassel/d
 5. Dopo n suddivisioni le metà dello stesso tipo con lo stesso asse AC (estremi arrotondati a 1/8 di px, senza tenere conto dell'ordine) formano una tessera con vertici B1, A1, B2, C1. Una metà senza compagna resta una tessera triangolare (con L = 28 non ce ne sono). Ordine delle tessere: ordinamento degli assi per X del primo estremo, poi Y, poi X e Y del secondo, poi tipo.
 6. Si tengono le tessere con il centro a distanza al massimo 233 dal centro del display.
 
-Risultato con L = 28: 425 tessere.
+Risultato con L = 28 e il sole al centro del display: 425 tessere (con il sole spostato circa 425..435).
 
 - Aquilone: angoli 72, 72, 72, 144 gradi, area 0,588 L^2 = 461 px2, 260 tessere; colore da morta (22, 22, 38).
 - Dardo: angoli 36, 72, 36, 216 gradi (non convesso), area 0,363 L^2 = 285 px2, 165 tessere; colore da morta (12, 12, 22).

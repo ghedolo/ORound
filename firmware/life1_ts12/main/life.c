@@ -23,6 +23,7 @@
 #define EMPTY_GENS     3                    // no live cells this long: new seed
 #define MAX_NB         16                   // vertex neighbors per tile (Penrose P2: at most 10)
 #define MAX_TRI        60000                // triangles during the subdivision
+#define OFFSET_MAX     (3 * RADIUS)         // the sun of the tiling lies up to this far from the display center
 #define NO_TILE        0xFFFF
 #define PHI            1.6180339887f
 #define RADIUS         (LCD_H_RES / 2.0f)
@@ -300,8 +301,12 @@ static void build(int edge)
     int64_t t0 = esp_timer_get_time();
     cells_free();
 
-    // Sun of 5 kites (10 halves); radius = long edge * PHI^n, the decagon covers the display
-    float r0 = RADIUS / cosf((float)M_PI / 10) + 2 * edge;
+    // Sun of 5 kites (10 halves) centered on a random point (sx, sy) up to OFFSET_MAX from the display center,
+    // so every build shows another part of the (non periodic) tiling; radius = long edge * PHI^n, the decagon
+    // covers the display
+    float off = OFFSET_MAX * sqrtf(frand()), dir = 2 * (float)M_PI * frand();
+    float sx = off * cosf(dir), sy = off * sinf(dir);
+    float r0 = (off + RADIUS) / cosf((float)M_PI / 10) + 2 * edge;
     int steps = (int)ceilf(logf(r0 / edge) / logf(PHI));
     float r = edge * powf(PHI, steps);
     tri_t *a = heap_caps_malloc(sizeof(tri_t) * MAX_TRI, MALLOC_CAP_SPIRAM);
@@ -310,8 +315,8 @@ static void build(int edge)
     for (int i = 0; i < 10; i++) {
         float t0 = i * (float)M_PI / 5, t1 = t0 + (float)M_PI / 5;
         float x0 = r * cosf(t0), y0 = r * sinf(t0), x1 = r * cosf(t1), y1 = r * sinf(t1);
-        if (i % 2 == 0) a[count++] = (tri_t){0, 0, 0, x0, y0, x1, y1};
-        else a[count++] = (tri_t){0, 0, 0, x1, y1, x0, y0};
+        if (i % 2 == 0) a[count++] = (tri_t){0, sx, sy, sx + x0, sy + y0, sx + x1, sy + y1};
+        else a[count++] = (tri_t){0, sx, sy, sx + x1, sy + y1, sx + x0, sy + y0};
     }
     for (int s = 0; s < steps; s++) {
         count = subdivide(a, count, b);
@@ -360,9 +365,9 @@ static void build(int edge)
         if (s_nn[i] < nb_min) nb_min = s_nn[i];
         if (s_nn[i] > nb_max) nb_max = s_nn[i];
     }
-    ESP_LOGI(TAG, "edge %d px: %d steps, %d triangles, %d tiles (%d unpaired), neighbors %d..%d, border %.1f px, "
-             "generation %.1f s, fade tau %.1f s, %d ms",
-             edge, steps, count, n, halves, nb_min, nb_max, 2 * inset, s_gen_len_us * 1e-6f, s_tau_s,
+    ESP_LOGI(TAG, "edge %d px: sun at (%.0f, %.0f), %d steps, %d triangles, %d tiles (%d unpaired), neighbors %d..%d, "
+             "border %.1f px, generation %.1f s, fade tau %.1f s, %d ms",
+             edge, sx, sy, steps, count, n, halves, nb_min, nb_max, 2 * inset, s_gen_len_us * 1e-6f, s_tau_s,
              (int)((esp_timer_get_time() - t0) / 1000));
 }
 
