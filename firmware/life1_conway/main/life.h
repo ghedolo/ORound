@@ -19,3 +19,6 @@ void life_update(int64_t now_us);
 
 // Draws one frame, band by band
 void life_render(void);
+
+// Frees the buffers and resets the timing; life_init builds everything again
+void life_deinit(void);

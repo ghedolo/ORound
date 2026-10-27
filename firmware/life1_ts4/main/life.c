@@ -352,6 +352,44 @@ void life_next_size(void)
     life_randomize();
 }
 
+void life_prev_size(void)
+{
+    s_level_idx = (s_level_idx + LEVEL_COUNT - 1) % LEVEL_COUNT;
+    build(LEVELS[s_level_idx]);
+    ESP_LOGI(TAG, "==== LEVEL %d, SIDE %.1f px ====", LEVELS[s_level_idx], s_side_px);
+    life_randomize();
+}
+
+void life_deinit(void)
+{
+    cells_free();
+    s_kind = NULL;
+    s_alive = NULL;
+    s_next = NULL;
+    s_prev = NULL;
+    s_slot = NULL;
+    s_age = NULL;
+    s_nn = NULL;
+    s_nb = NULL;
+    s_mid = NULL;
+    s_color = NULL;
+    s_rgb = NULL;
+    heap_caps_free(s_map);
+    s_map = NULL;
+    s_count = 0;
+    s_last_us = 0;
+}
+
+int life_size_idx(void)
+{
+    return s_level_idx;
+}
+
+void life_set_size_idx(int idx)
+{
+    if (idx >= 0 && idx < LEVEL_COUNT) s_level_idx = idx;
+}
+
 void life_randomize(void)
 {
     int n = 0;

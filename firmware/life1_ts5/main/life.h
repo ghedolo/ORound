@@ -12,6 +12,15 @@ void life_init(void);
 // Rebuilds the tiling with the next tile size from the list and seeds it
 void life_next_size(void);
 
+// Rebuilds the tiling with the previous tile size from the list and seeds it
+void life_prev_size(void);
+
+// Index of the current tile size in the list
+int life_size_idx(void);
+
+// Selects the tile size by index without rebuilding (call before life_init); out of range: ignored
+void life_set_size_idx(int idx);
+
 // Current hexagon side in px
 int life_edge_px(void);
 
@@ -26,3 +35,6 @@ void life_update(int64_t now_us);
 
 // Draws one frame, band by band
 void life_render(void);
+
+// Frees the buffers and resets the timing; life_init builds everything again
+void life_deinit(void);

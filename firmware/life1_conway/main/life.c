@@ -93,6 +93,11 @@ void life_init(void)
     life_randomize();
 }
 
+void life_deinit(void)
+{
+    s_last_us = 0;
+}
+
 void life_randomize(void)
 {
     int n = 0;

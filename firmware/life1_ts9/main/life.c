@@ -319,6 +319,44 @@ void life_next_size(void)
     life_randomize();
 }
 
+void life_prev_size(void)
+{
+    s_edge_idx = (s_edge_idx + EDGE_COUNT - 1) % EDGE_COUNT;
+    build(EDGE_PX[s_edge_idx]);
+    ESP_LOGI(TAG, "==== RHOMBUS %d px ====", EDGE_PX[s_edge_idx]);
+    life_randomize();
+}
+
+void life_deinit(void)
+{
+    cells_free();
+    s_kind = NULL;
+    s_alive = NULL;
+    s_next = NULL;
+    s_prev = NULL;
+    s_slot = NULL;
+    s_age = NULL;
+    s_nn = NULL;
+    s_nb = NULL;
+    s_mid = NULL;
+    s_color = NULL;
+    s_rgb = NULL;
+    heap_caps_free(s_map);
+    s_map = NULL;
+    s_count = 0;
+    s_last_us = 0;
+}
+
+int life_size_idx(void)
+{
+    return s_edge_idx;
+}
+
+void life_set_size_idx(int idx)
+{
+    if (idx >= 0 && idx < EDGE_COUNT) s_edge_idx = idx;
+}
+
 void life_randomize(void)
 {
     int n = 0;
