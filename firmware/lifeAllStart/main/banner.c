@@ -16,10 +16,12 @@
 #define WAVE_AMP_MAX   22.0f
 #define WAVE_LEN_MIN   300.0f               // main wave length in px
 #define WAVE_LEN_MAX   520.0f
-#define RIPPLE_AMP_MIN 3.0f                 // second, shorter wave
-#define RIPPLE_AMP_MAX 8.0f
-#define RIPPLE_LEN_MIN 120.0f
-#define RIPPLE_LEN_MAX 200.0f
+#define RIPPLE_AMP_MIN 2.0f                 // second, shorter wave
+#define RIPPLE_AMP_MAX 6.0f
+#define RIPPLE_LEN_MIN 150.0f
+#define RIPPLE_LEN_MAX 240.0f
+#define DESCENT_PX     18                   // below the baseline (p, y)
+#define SPREAD         0.7f                 // advance growth per unit of CAP_PX * curvature in valleys
 
 static const pixel_t COLOR = {255, 140, 30};
 
@@ -98,10 +100,51 @@ static void draw_glyph(uint8_t *fb, const banner_glyph_t *g, float px, float py,
     }
 }
 
-static void draw_line(uint8_t *fb, const char *text, float base)
+typedef struct {
+    const char *text;
+    wave_t w;
+    float arc[LCD_H_RES];               // arc length along the baseline from x = 0, one entry per px
+    float start;                        // arc length of the first letter
+    float x0, x1;                       // horizontal span of the text
+} line_t;
+
+static float wave_curve(const wave_t *w, float x)
 {
-    wave_t w = {
-        .base = base,
+    return -w->a1 * w->k1 * w->k1 * sinf(w->k1 * x + w->p1) - w->a2 * w->k2 * w->k2 * sinf(w->k2 * x + w->p2);
+}
+
+static float arc_to_x(const line_t *l, float s)
+{
+    int x = 0;
+    while (x < LCD_H_RES - 2 && l->arc[x + 1] < s) x++;
+    return x + (s - l->arc[x]) / (l->arc[x + 1] - l->arc[x]);
+}
+
+// Lays out the text from arc length start, draws it when fb is not NULL; returns the arc length at the end.
+// Where the baseline bends into a valley the letter tops converge, so the advance grows with the curvature.
+static float line_place(line_t *l, float start, uint8_t *fb)
+{
+    float pen = start;
+    l->x0 = arc_to_x(l, start);
+    for (const char *p = l->text; *p; p++) {
+        float x = arc_to_x(l, pen);
+        float m = wave_slope(&l->w, x);
+        float k = -wave_curve(&l->w, x) / powf(1 + m * m, 1.5f);
+        float adv = advance(*p) * (1 + SPREAD * CAP_PX * fmaxf(0, k));
+        float gx = arc_to_x(l, pen + adv / 2);
+        pen += adv;
+        const banner_glyph_t *g = glyph(*p);
+        if (g && fb) draw_glyph(fb, g, gx, wave_y(&l->w, gx), atanf(wave_slope(&l->w, gx)));
+    }
+    l->x1 = arc_to_x(l, pen);
+    return pen;
+}
+
+// Random wave, then the start that centers the text horizontally (two passes: the advance depends on the place)
+static void line_init(line_t *l, const char *text)
+{
+    l->text = text;
+    l->w = (wave_t){
         .a1 = frand(WAVE_AMP_MIN, WAVE_AMP_MAX) * (esp_random() & 1 ? 1 : -1),
         .k1 = 2 * (float)M_PI / frand(WAVE_LEN_MIN, WAVE_LEN_MAX),
         .p1 = frand(0, 2 * (float)M_PI),
@@ -109,35 +152,28 @@ static void draw_line(uint8_t *fb, const char *text, float base)
         .k2 = 2 * (float)M_PI / frand(RIPPLE_LEN_MIN, RIPPLE_LEN_MAX),
         .p2 = frand(0, 2 * (float)M_PI),
     };
-
-    // Arc length along the baseline from x = 0, one entry per px
-    static float arc[LCD_H_RES];
-    arc[0] = 0;
+    l->arc[0] = 0;
     for (int x = 1; x < LCD_H_RES; x++) {
-        float m = wave_slope(&w, x - 0.5f);
-        arc[x] = arc[x - 1] + sqrtf(1 + m * m);
+        float m = wave_slope(&l->w, x - 0.5f);
+        l->arc[x] = l->arc[x - 1] + sqrtf(1 + m * m);
     }
-
+    float mid = l->arc[LCD_H_RES / 2];
     int total = 0;
     for (const char *p = text; *p; p++) total += advance(*p);
-    float pen = arc[LCD_H_RES / 2] - total / 2.0f;
-    int x = 0;
-    for (const char *p = text; *p; p++) {
-        int adv = advance(*p);
-        float target = pen + adv / 2.0f;
-        pen += adv;
-        const banner_glyph_t *g = glyph(*p);
-        if (!g) continue;
-        while (x < LCD_H_RES - 2 && arc[x + 1] < target) x++;
-        float gx = x + (target - arc[x]) / (arc[x + 1] - arc[x]);
-        draw_glyph(fb, g, gx, wave_y(&w, gx), atanf(wave_slope(&w, gx)));
-    }
+    float len = line_place(l, mid - total / 2.0f, NULL) - (mid - total / 2.0f);
+    l->start = mid - len / 2;
+    line_place(l, l->start, NULL);
 }
 
 void banner_show(const char *name)
 {
     uint8_t *fb = heap_caps_calloc(LCD_H_RES * LCD_V_RES, 1, MALLOC_CAP_SPIRAM);
-    if (!fb) return;
+    line_t *lines = heap_caps_malloc(sizeof(line_t) * MAX_LINES, MALLOC_CAP_SPIRAM);
+    if (!fb || !lines) {
+        heap_caps_free(fb);
+        heap_caps_free(lines);
+        return;
+    }
 
     char words[MAX_LINES][MAX_WORD];
     int n = 0;
@@ -145,14 +181,39 @@ void banner_show(const char *name)
         int len = strcspn(p, "_");
         if (len > MAX_WORD - 1) len = MAX_WORD - 1;
         memcpy(words[n], p, len);
-        words[n++][len] = 0;
+        words[n][len] = 0;
+        line_init(&lines[n], words[n]);
+        n++;
         p += strcspn(p, "_");
         if (*p) p++;
     }
 
-    // Lines of cap height CAP_PX, centered as a block
-    float top = (LCD_V_RES - (n * CAP_PX + (n - 1) * LINE_GAP)) / 2.0f;
-    for (int i = 0; i < n; i++) draw_line(fb, words[i], top + CAP_PX + i * (CAP_PX + LINE_GAP));
+    // Each line at least CAP_PX + LINE_GAP below the previous one at every x of both texts
+    for (int i = 0; i < n; i++) {
+        lines[i].w.base = 0;
+        if (i == 0) continue;
+        line_t *a = &lines[i - 1], *b = &lines[i];
+        int xa = (int)fminf(a->x0, b->x0), xb = (int)ceilf(fmaxf(a->x1, b->x1));
+        float d = 1e9f;
+        for (int x = xa; x <= xb; x++) d = fminf(d, wave_y(&b->w, x) - wave_y(&a->w, x));
+        b->w.base = CAP_PX + LINE_GAP - d;
+    }
+
+    // Block centered between the highest letter top and the lowest descender
+    float top = 1e9f, bottom = -1e9f;
+    for (int i = 0; i < n; i++) {
+        for (int x = (int)lines[i].x0; x <= (int)ceilf(lines[i].x1); x++) {
+            float y = wave_y(&lines[i].w, x);
+            top = fminf(top, y - CAP_PX);
+            bottom = fmaxf(bottom, y + DESCENT_PX);
+        }
+    }
+    float shift = LCD_V_RES / 2.0f - (top + bottom) / 2;
+    for (int i = 0; i < n; i++) {
+        lines[i].w.base += shift;
+        line_place(&lines[i], lines[i].start, fb);
+    }
+    heap_caps_free(lines);
 
     for (int y0 = 0; y0 < LCD_V_RES; y0 += PANEL_BAND_LINES) {
         int y1 = y0 + PANEL_BAND_LINES - 1;
