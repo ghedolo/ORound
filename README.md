@@ -13,7 +13,7 @@ grid or an image seen through the water surface, bent by the waves (refraction).
 - Display: 466x466 AMOLED, CO5300 controller, QSPI at 40 MHz, driven in RGB888 (24 bit)
 - Touch: CST820 on I2C (address 0x15)
 - Brightness (all experiments): hold a finger still for 0.8 s, then drag up (brighter) or down (darker) without lifting; the value is saved in NVS and restored at boot
-- Buttons: BOOT (GPIO0) cycles the color palettes; PWR (GPIO17) toggles the microphone in `drop1_16M_pool_listening`, long press powers off in `drop1_16M_pool_tiles`; in `drop1_16M_pool_image` / `drop1_16M_pool_crystal` a short press toggles the microphone and a long press powers off (same in `empty2`, where BOOT has no action yet); in `life1_*` BOOT is a new seed (`life1_conway`) or the next tile size (`life1_penrose`, `life1_ts12`, `life1_ts1`, `life1_ts2`, `life1_ts3`, `life1_ts5`, `life1_ts6`, `life1_ts7`, `life1_ts9`, `life1_ts11`), the rosette spacing (`life1_ts8`), the lattice spacing (`life1_ts10`) or the next pentaflake level (`life1_ts4`), PWR long press powers off; in `lifeAllStart` PWR single/double click selects the next/previous tiling, BOOT single/double click the next/previous tile size
+- Buttons: BOOT (GPIO0) cycles the color palettes; PWR (GPIO17) toggles the microphone in `drop1_16M_pool_listening`, long press powers off in `drop1_16M_pool_tiles`; in `drop1_16M_pool_image` / `drop1_16M_pool_crystal` a short press toggles the microphone and a long press powers off (same in `empty2`, where BOOT has no action yet); in `life1_*` BOOT is a new seed (`life1_conway`) or the next tile size (`life1_penrose`, `life1_ts12`, `life1_ts1`, `life1_ts2`, `life1_ts3`, `life1_ts5`, `life1_ts6`, `life1_ts7`, `life1_ts9`, `life1_ts11`), the rosette spacing (`life1_ts8`), the lattice spacing (`life1_ts10`) or the next pentaflake level (`life1_ts4`), PWR long press powers off; in `lifeAllStart` PWR single/double click selects the next/previous tiling, BOOT single/double click the next/previous tile size; in `flame1_doom` BOOT cycles the pixel scale, a tap toggles the fire source, PWR long press powers off
 - Docs: <https://docs.waveshare.com/ESP32-S3-Touch-AMOLED-1.32>
 
 ## Firmware experiments
@@ -48,6 +48,7 @@ Each experiment is a standalone ESP-IDF project under `firmware/`.
 | `life1_ts11` | Game of Life (B2/S23) on the isometric tiling of `data/tassel/fake_3d5.jpg` (3D look, three grays and white, no outlines: tiles = same-color regions): rhombic frames with a hole (outer and inner outline joined by a zero-width cut), small pieces of 3 and 5 triangles and white triangles; period lattice (0, 10), (15, 5) on a grid with horizontal sides, 21 tiles per period; T-junction points added as vertices so tiles touching along a side share vertices; neighbors 3 (triangles), 5 (pieces), 16 (frames); dead cells blue and gray, live colors scaled per shade; no black border; BOOT cycles the triangle side (6..40 px, default 12); no microphone |
 | `life1_ts12` | Game of Life (B3/S23) on a Penrose kite and dart tiling (P2), recognized in `data/tassel/darts_and_kites_ii.png` from the tile angles; built on the device by deflation of half kites and half darts from a sun of 5 kites placed at a random point up to 3 display radii from the center (another part of the non periodic tiling at every boot and BOOT) (rules found by testing the 64 variants of split position and half orientation: the only ones where all halves pair into kites and darts), halves paired on their axis; 425 tiles at 28 px long edge, neighbors 4..10; non-convex darts rasterized with the crossing test; black border from 18 px; dead cells two blue tones; BOOT cycles the long edge (12..80 px); no microphone |
 | `lifeAllStart` | All 14 `life1_*` experiments in one firmware (497 KB): the `life.c` of each `life1_*` folder is compiled directly (no copies), public functions renamed per tiling by a forced include (`main/life_ns.h`); only the current tiling is in memory (`life_deinit` frees it before the next is built). PWR: single click next tiling, double click previous tiling, long press power off. BOOT: single click next tile size (new seed in `life1_conway`), double click previous size, long press free. Tiling and tile size of each tiling saved in NVS and restored at boot. At every change the name is shown for 1.5 s, orange on black, one large line per word (`life1` / `ts11`), each line on a random wavy baseline, kept apart at every point (DejaVu Sans Bold 84 px, `python scripts/make_banner_font.py`) |
+| `flame1_doom` | Fire of the PSX Doom title screen (algorithm as described by Fabien Sanglard): grid of intensities 0..36 shown with the 37 color Doom fire palette, bottom row = 36; at each step every cell is copied one row up, shifted by -2..+1 columns and decreased by 0 or 1 at random, black propagates straight up; 27 steps/s; one cell = 3x3 px by default (grid 156x156), BOOT cycles 1/2/3/4/5/6/8 px (saved in NVS); tap toggles the source (off: the bottom row dies down as at the end of the PSX intro); about 25 fps |
 
 ### Game of Life previews
 
@@ -135,12 +136,12 @@ Figures extracted from the local Claude Code session transcripts of this project
 | Metric | Value |
 |---|---|
 | First message (UTC) | 2026-10-16 19:12 |
-| Last message (UTC) | 2026-10-27 07:08 |
-| Calendar span | 12 days |
-| Commits | 32 |
-| Sessions | 6 |
-| Messages (user + assistant) | 1187 (191 + 996) |
-| Active time | ~8.60 h |
+| Last message (UTC) | 2026-10-31 21:24 |
+| Calendar span | 16 days |
+| Commits | 34 |
+| Sessions | 7 |
+| Messages (user + assistant) | 1209 (194 + 1015) |
+| Active time | ~8.72 h |
 
 Active time is the sum of the gaps between consecutive messages (user and assistant,
 sorted by timestamp) that are at most 5 minutes long. Longer gaps are treated as pauses
@@ -149,17 +150,17 @@ build and flash waits shorter than 5 minutes.
 
 | Tokens | Count |
 |---|---|
-| Input (non-cache) | 1,992 |
-| Output | 920,906 |
-| Cache write | 2,221,118 |
-| Cache read | 231,650,574 |
-| Total | 234,794,590 |
+| Input (non-cache) | 2,030 |
+| Output | 934,080 |
+| Cache write | 2,274,493 |
+| Cache read | 233,271,628 |
+| Total | 236,482,231 |
 
 Cache read tokens are the conversation context re-sent to the model at every turn and
 served from the prompt cache; they are by far the largest share but are billed at a
 fraction of the normal input price.
 
-**Caveman mode.** All six sessions ran with Caveman mode active (terse responses).
-Average output was 925 tokens per assistant message (920,906 output tokens in total).
+**Caveman mode.** All seven sessions ran with Caveman mode active (terse responses).
+Average output was 920 tokens per assistant message (934,080 output tokens in total).
 No session without Caveman mode exists in this project, so no comparison with
 standard mode is available.
