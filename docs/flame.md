@@ -45,19 +45,19 @@ The serial log prints `wind` every 2 s and `blown out` / `relit`.
 
 | `flame1_doom` | `flame1_doom_rad` |
 |---|---|
-| ![flame1_doom](../assets/previews/flame1_doom.png) | ![flame1_doom_rad](../assets/previews/flame1_doom_rad.png) |
+| <img src="../assets/previews/flame1_doom.png" alt="flame1_doom" width="200"> | <img src="../assets/previews/flame1_doom_rad.png" alt="flame1_doom_rad" width="200"> |
 
 `flame1_doom_rad_mv` (fire moved off the center, the previous one dying at the center), one per palette:
 
 | Doom | green / pink | purple / light blue | turquoise / green |
 |---|---|---|---|
-| ![doom](../assets/previews/flame1_doom_rad_mv_doom.png) | ![green](../assets/previews/flame1_doom_rad_mv_green.png) | ![purple](../assets/previews/flame1_doom_rad_mv_purple.png) | ![turquoise](../assets/previews/flame1_doom_rad_mv_turquoise.png) |
+| <img src="../assets/previews/flame1_doom_rad_mv_doom.png" alt="doom" width="200"> | <img src="../assets/previews/flame1_doom_rad_mv_green.png" alt="green" width="200"> | <img src="../assets/previews/flame1_doom_rad_mv_purple.png" alt="purple" width="200"> | <img src="../assets/previews/flame1_doom_rad_mv_turquoise.png" alt="turquoise" width="200"> |
 
 `flame1_doom_xong`, fire at the center, one per palette:
 
 | xong lab (L*) | xong25 image (image order) |
 |---|---|
-| ![xong lab](../assets/previews/flame1_doom_xong_lab.png) | ![xong image](../assets/previews/flame1_doom_xong_image.png) |
+| <img src="../assets/previews/flame1_doom_xong_lab.png" alt="xong lab" width="200"> | <img src="../assets/previews/flame1_doom_xong_image.png" alt="xong image" width="200"> |
 
 Fire previews made with `python scripts/make_flame_previews.py` (same algorithm, palettes and default
 3 px scale as the firmware, 300 steps; the step is vectorized per row and the sub-cell
