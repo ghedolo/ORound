@@ -14,6 +14,7 @@
 
 #define PWR_HOLD_US       1500000   // PWR held this long: power off
 #define KEY_DEBOUNCE_US   150000
+#define TAP_GUARD_US      600000    // taps this close to BOOT activity are ignored (pressing BOOT touches the panel)
 #define BRIGHT_HOLD_US    800000    // finger held still this long: brightness mode until release
 #define BRIGHT_STILL_D2   (15 * 15) // max movement while holding still
 #define BRIGHT_RANGE_PX   300       // vertical drag for the full brightness range
@@ -146,11 +147,13 @@ static void main_task(void *arg)
     int frames = 0;
     int64_t render_us = 0;
     int64_t fps_t0 = esp_timer_get_time();
+    int64_t boot_last_down_us = -TAP_GUARD_US;   // last time BOOT was seen down
 
     while (1) {
         uint16_t x, y;
         bool pressed = touch_read(&x, &y);
         int64_t now = esp_timer_get_time();
+        if (gpio_get_level(s_boot_key.pin) != s_boot_key.idle_level) boot_last_down_us = now;
         if (pressed && !was_pressed) {
             down_x = x;
             down_y = y;
@@ -170,7 +173,11 @@ static void main_task(void *arg)
             }
         }
         if (!pressed && was_pressed && !bright_mode && still) {
-            on_tap();
+            if (now - boot_last_down_us < TAP_GUARD_US || down_us - boot_last_down_us < TAP_GUARD_US) {
+                ESP_LOGI(TAG, "tap ignored (BOOT)");
+            } else {
+                on_tap();
+            }
         }
         if (!pressed && bright_mode) {
             bright_mode = false;

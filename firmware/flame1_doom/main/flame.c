@@ -14,6 +14,7 @@
 #define STEP_US        (1000000 / 27)   // fire steps per second
 #define MAX_STEPS      3           // steps per frame at most (after a slow frame)
 #define DEFAULT_SCALE  3
+#define HEIGHT_FRAC    0.70f       // average flame height as a fraction of the display height
 
 static const char *TAG = "flame";
 
@@ -42,6 +43,7 @@ static uint8_t *s_fire;            // s_w * s_h intensities, row 0 at the top
 static bool s_source_on = true;
 static int64_t s_next_step_us;
 static uint32_t s_rng;
+static uint32_t s_decay_thr;       // decay when a 16-bit random value is below this
 
 // xorshift32, one call per cell per step
 static inline uint32_t rng_next(void)
@@ -93,6 +95,12 @@ static void grid_build(void)
     assert(s_fire);
     memset(s_fire, 0, n);
     if (s_source_on) memset(s_fire + (size_t)(s_h - 1) * s_w, LEVELS - 1, s_w);
+    // Decay probability per row so the flame reaches HEIGHT_FRAC of the display
+    // at every scale: height in cells = (LEVELS - 1) / p
+    float p = (LEVELS - 1) / (HEIGHT_FRAC * s_h);
+    if (p > 1.0f) p = 1.0f;
+    s_decay_thr = (uint32_t)(p * 65536.0f);
+    ESP_LOGI(TAG, "decay p %.3f", p);
     ESP_LOGI(TAG, "==== SCALE %d px ==== grid %dx%d", s_scale, s_w, s_h);
 }
 
@@ -126,7 +134,7 @@ void flame_toggle_source(void)
 
 // One step of the Doom fire. For every cell (x, y), y >= 1, x outer loop, y from top
 // to bottom as in the original: r = random 0..3, the cell above shifted by 1 - r
-// columns gets the value minus (r & 1). Black cells blacken the cell straight above.
+// columns gets the value minus 1 with probability p (set per scale in grid_build). Black cells blacken the cell straight above.
 // Columns wrap around.
 static void fire_step(void)
 {
@@ -139,11 +147,12 @@ static void fire_step(void)
                 f[(y - 1) * w + x] = 0;
                 continue;
             }
-            uint32_t r = rng_next() & 3;
+            uint32_t rnd = rng_next();
+            uint32_t r = rnd & 3;
             int dx = x - (int)r + 1;
             if (dx < 0) dx += w;
             else if (dx >= w) dx -= w;
-            f[(y - 1) * w + dx] = v - (r & 1);
+            f[(y - 1) * w + dx] = v - (((rnd >> 16) < s_decay_thr) ? 1 : 0);
         }
     }
     // Source off: the bottom row dies down by 0..3 per step
