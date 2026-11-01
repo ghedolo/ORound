@@ -31,7 +31,17 @@ Back to the [main README](../README.md).
 
 ## Previews
 
-Not available yet.
+| `drop1_16M_pool_tiles` | `drop1_16M_pool_listening` | `drop1_16M_pool_image` | `drop1_16M_pool_crystal` |
+|---|---|---|---|
+| ![drop1_16M_pool_tiles](../assets/previews/drop1_16M_pool_tiles.png) | ![drop1_16M_pool_listening](../assets/previews/drop1_16M_pool_listening.png) | ![drop1_16M_pool_image](../assets/previews/drop1_16M_pool_image.png) | ![drop1_16M_pool_crystal](../assets/previews/drop1_16M_pool_crystal.png) |
+
+Made with `python scripts/make_drop_previews.py` (same wave equation, refraction, floor and
+colors as the firmware, in float instead of fixed point): `drop1_16M_pool_tiles` three taps
+with rebounds, `drop1_16M_pool_listening` small random drops as from the microphone,
+`drop1_16M_pool_image` a tap and a drag trail on the placeholder floor
+(`assets/floor_placeholder.bin`, the build default). `drop1_16M_pool_crystal` two wide taps on the
+first frame of the crystal animation; the animation is third-party and not in the repository,
+so the script draws this preview only when given the local file (`--crystal=<floor.bin>`).
 
 ## Microphone
 

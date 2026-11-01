@@ -4,7 +4,7 @@ The image is scaled to the given width and centered on a square of MASK_SIZE x M
 pixels (the display plus a margin for the refraction shift).
 
 Mask mode (default): one byte per pixel, figure coverage 0..16, taken from the alpha
-channel or from dark pixels when the image has no transparency; drawn with the palette.
+channel or, when the image has no transparency (or a fully opaque alpha), from dark pixels; drawn with the palette.
 Color mode (--rgb): three bytes per pixel (RGB888), drawn with the image colors.
 The firmware tells these two modes apart by the file size.
 Animation mode (--anim, animated GIF): frames composited on a white background, scaled
@@ -61,9 +61,13 @@ def main():
             f.write(canvas.tobytes())
         print(f"{dst}: {MASK_SIZE}x{MASK_SIZE} RGB888, image {width}x{height}")
         return
+    alpha = None
     if img.mode in ("RGBA", "LA") or "transparency" in img.info:
-        cover = img.convert("RGBA").getchannel("A")
+        alpha = img.convert("RGBA").getchannel("A")
+    if alpha is not None and alpha.getextrema() != (255, 255):
+        cover = alpha
     else:
+        # No alpha, or fully opaque alpha: dark pixels are the figure
         cover = Image.eval(img.convert("L"), lambda v: 255 - v)
     height = round(cover.height * width / cover.width)
     cover = cover.resize((width, height), Image.LANCZOS)

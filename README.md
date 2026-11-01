@@ -10,10 +10,6 @@ each series has its own page with the full description, controls and previews.
 | Game of Life | [docs/life.md](docs/life.md) | `life1_*`, `lifeAllStart`: Life on square cells and on 13 tilings built on the device (Penrose, Alhambra, Cairo, isometric, arabesque, curved tiles, kites and darts) |
 | Fire | [docs/flame.md](docs/flame.md) | `flame1_*`: PSX Doom fire, linear and radial; the radial fire moves to the tap point, changes palette and reacts to blowing on the microphone |
 
-| `life1_penrose` | `life1_ts8` | `flame1_doom_rad` | `flame1_doom_rad_mv` |
-|---|---|---|---|
-| ![life1_penrose](assets/previews/life1_penrose.png) | ![life1_ts8](assets/previews/life1_ts8.png) | ![flame1_doom_rad](assets/previews/flame1_doom_rad.png) | ![flame1_doom_rad_mv](assets/previews/flame1_doom_rad_mv_purple.png) |
-
 ## Hardware
 
 - Board: Waveshare ESP32-S3-Touch-AMOLED-1.32 (ESP32-S3-PICO-1-N8R8, 8 MB flash, 8 MB octal PSRAM)
@@ -55,12 +51,12 @@ Figures extracted from the local Claude Code session transcripts of this project
 | Metric | Value |
 |---|---|
 | First message (UTC) | 2026-10-16 19:12 |
-| Last message (UTC) | 2026-11-01 10:17 |
+| Last message (UTC) | 2026-11-01 10:25 |
 | Calendar span | 17 days |
-| Commits | 35 |
+| Commits | 36 |
 | Sessions | 8 |
-| Messages (user + assistant) | 1409 (239 + 1170) |
-| Active time | ~10.09 h |
+| Messages (user + assistant) | 1442 (243 + 1199) |
+| Active time | ~10.21 h |
 
 Active time is the sum of the gaps between consecutive messages (user and assistant,
 sorted by timestamp) that are at most 5 minutes long. Longer gaps are treated as pauses
@@ -69,17 +65,17 @@ build and flash waits shorter than 5 minutes.
 
 | Tokens | Count |
 |---|---|
-| Input (non-cache) | 2,338 |
-| Output | 1,027,594 |
-| Cache write | 2,522,755 |
-| Cache read | 251,599,974 |
-| Total | 255,152,661 |
+| Input (non-cache) | 2,396 |
+| Output | 1,049,301 |
+| Cache write | 2,582,240 |
+| Cache read | 259,043,064 |
+| Total | 262,677,001 |
 
 Cache read tokens are the conversation context re-sent to the model at every turn and
 served from the prompt cache; they are by far the largest share but are billed at a
 fraction of the normal input price.
 
 **Caveman mode.** All eight sessions ran with Caveman mode active (terse responses).
-Average output was 878 tokens per assistant message (1,027,594 output tokens in total).
+Average output was 875 tokens per assistant message (1,049,301 output tokens in total).
 No session without Caveman mode exists in this project, so no comparison with
 standard mode is available.
