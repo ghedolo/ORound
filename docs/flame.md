@@ -47,7 +47,7 @@ The serial log prints `wind` every 2 s and `blown out` / `relit`.
 |---|---|
 | <img src="../assets/previews/flame1_doom.png" alt="flame1_doom" width="200"> | <img src="../assets/previews/flame1_doom_rad.png" alt="flame1_doom_rad" width="200"> |
 
-`flame1_doom_rad_mv` (fire moved off the center, the previous one dying at the center), one per palette:
+`flame1_doom_rad_mv` (the previous fire dying on one side, the new fire just started on the other side), one per palette:
 
 | Doom | green / pink | purple / light blue | turquoise / green |
 |---|---|---|---|

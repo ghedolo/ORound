@@ -143,14 +143,14 @@ def polar_grid(scale):
     return w, h
 
 
-def radial_fire(rng, scale, steps, source_on=True):
+def radial_fire(rng, scale, steps, source_on=True, off_steps=30):
     w, h = polar_grid(scale)
     f = np.zeros((h, w), np.uint8)
     f[-1] = LEVELS - 1
     k, p = decay_params((LEVELS - 1) / (0.70 * h))
     fire_steps(f, rng, steps, [-1, 0, 0, 1], None, k, p)
     if not source_on:
-        fire_steps(f, rng, 30, [-1, 0, 0, 1], None, k, p, source_on=False)
+        fire_steps(f, rng, off_steps, [-1, 0, 0, 1], None, k, p, source_on=False)
     return f
 
 
@@ -177,12 +177,13 @@ def doom_radial(out_dir, rng, scale=3):
 
 
 def doom_radial_mv(out_dir, rng, scale=3):
-    """One preview per palette; the fire moved off the center, the previous one dying."""
-    spots = {"doom": (300, 170), "green": (170, 290), "purple": (290, 300), "turquoise": (180, 170)}
-    for name, (cx, cy) in spots.items():
-        old = radial_fire(rng, scale, STEPS, source_on=False)
-        new = radial_fire(rng, scale, 40)
-        img = render_polar([(old, RADIUS, RADIUS), (new, cx, cy)], scale, palette(name))
+    """One preview per palette: the dying fire on one side, the new fire (just started) on the other."""
+    spots = {"doom": ((150, 150), (330, 320)), "green": ((320, 140), (150, 320)),
+             "purple": ((140, 300), (320, 160)), "turquoise": ((310, 320), (150, 140))}
+    for name, (old_c, new_c) in spots.items():
+        old = radial_fire(rng, scale, STEPS, source_on=False, off_steps=12)
+        new = radial_fire(rng, scale, 25)
+        img = render_polar([(old, *old_c), (new, *new_c)], scale, palette(name))
         save(img, os.path.join(out_dir, f"flame1_doom_rad_mv_{name}.png"))
 
 
