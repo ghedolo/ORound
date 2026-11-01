@@ -53,11 +53,11 @@ The serial log prints `wind` every 2 s and `blown out` / `relit`.
 |---|---|---|---|
 | ![doom](../assets/previews/flame1_doom_rad_mv_doom.png) | ![green](../assets/previews/flame1_doom_rad_mv_green.png) | ![purple](../assets/previews/flame1_doom_rad_mv_purple.png) | ![turquoise](../assets/previews/flame1_doom_rad_mv_turquoise.png) |
 
-`flame1_doom_xong` palettes (top: strips of the 37 levels, slot number under the image order
-strip, stripe number of the image inside each slot; bottom: levels drawn by distance from
-the center, white at the center):
+`flame1_doom_xong`, fire at the center, one per palette:
 
-![xong palettes](../assets/previews/flame1_doom_xong_palettes.png)
+| xong lab (L*) | xong25 image (image order) |
+|---|---|
+| ![xong lab](../assets/previews/flame1_doom_xong_lab.png) | ![xong image](../assets/previews/flame1_doom_xong_image.png) |
 
 Fire previews made with `python scripts/make_flame_previews.py` (same algorithm, palettes and default
 3 px scale as the firmware, 300 steps; the step is vectorized per row and the sub-cell
