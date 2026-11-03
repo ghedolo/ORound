@@ -38,7 +38,7 @@ void flame_update(int64_t now_us);
 // Draws one frame, band by band
 void flame_render(void);
 
-// Next color palette: Doom (orange / yellow), green / pink, purple / light blue, turquoise / green
+// Next color palette: Doom (orange / yellow, at startup), Xong lab, Xong 25 image
 void flame_next_palette(void);
 
 // Current scale in display pixels per grid cell
