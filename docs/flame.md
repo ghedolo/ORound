@@ -64,6 +64,12 @@ The serial log prints `wind` every 2 s and `blown out` / `relit`.
 
 <img src="../assets/previews/flame1_doom_spark.png" alt="flame1_doom_spark" width="200">
 
+8 s animation (20 fps, one explosion at 3 s, rotation back and forth):
+
+<img src="../assets/previews/flame1_doom_spark.gif" alt="flame1_doom_spark animation" width="300">
+
+Animation made with `python scripts/make_spark_video.py` (same constants as the firmware, fire at 27 steps/s, sparks at 60 Hz).
+
 Fire previews made with `python scripts/make_flame_previews.py` (same algorithm, palettes and default
 3 px scale as the firmware, 300 steps; sparks simulated at 60 Hz for 1.5 s; the step is vectorized per row and the sub-cell
 shift is not drawn).
