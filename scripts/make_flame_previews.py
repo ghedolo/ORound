@@ -195,6 +195,79 @@ def doom_xong(out_dir, rng, scale=3):
              os.path.join(out_dir, f"flame1_doom_{name}.png"))
 
 
+def doom_spark(out_dir, rng, scale=3):
+    """flame1_doom_spark: black and white fire (white DD), flickering source, welding sparks
+    (white DD) and one explosion off center (white FF), same constants as spark.c."""
+    w, h = polar_grid(scale)
+    f = np.zeros((h, w), np.uint8)
+    k, p = decay_params((LEVELS - 1) / (0.70 * h))
+    for _ in range(STEPS):
+        # Source flicker: 36 - (common 0..8 + per cell 0..6 + 1/6 chance of 0..24)
+        loss = rng.integers(0, 9) + rng.integers(0, 7, w) + (rng.integers(0, 6, w) == 0) * rng.integers(0, 25, w)
+        f[-1] = np.maximum(LEVELS - 1 - loss, 0).astype(np.uint8)
+        fire_steps(f, rng, 1, [-1, 0, 0, 1], None, k, p)
+    luma = np.array(DOOM_RGB, float) @ np.array([0.299, 0.587, 0.114])
+    pal = np.where((luma + 0.5 >= 128)[:, None], 0xDD, 0).repeat(3, 1).astype(np.uint8)
+    img = render_polar([(f, RADIUS, RADIUS)], scale, pal)
+
+    # Sparks: 60 Hz simulation for 1.5 s, explosion 0.35 s before the end
+    dt, t_end, t_boom = 1 / 60, 1.5, 1.15
+    sp = []                                     # [x, y, vx, vy, life, child, boom]
+
+    def spawn(x, y, speed, life, child, boom):
+        a = rng.random() * 2 * math.pi
+        sp.append([x, y, math.cos(a) * speed, math.sin(a) * speed, life, child, boom])
+
+    acc, t = 0.0, 0.0
+    damp = math.exp(-1.2 * dt)
+    bx = by = None
+    while t < t_end:
+        nxt = []
+        for s_ in sp:
+            s_[4] -= dt
+            if s_[4] <= 0:
+                if not s_[5] and rng.random() < 0.30:
+                    for _ in range(3):
+                        nxt.append((s_[0], s_[1], 560 * 0.45 * (0.3 + 0.7 * rng.random()),
+                                    0.30 * (0.4 + 0.6 * rng.random()), True, s_[6]))
+                s_[4] = None
+                continue
+            s_[2] *= damp
+            s_[3] = s_[3] * damp + 520 * dt
+            s_[0] += s_[2] * dt
+            s_[1] += s_[3] * dt
+        sp = [s_ for s_ in sp if s_[4] is not None]
+        for args in nxt:
+            spawn(*args)
+        if bx is None and t >= t_boom:
+            a = rng.random() * 2 * math.pi
+            r = RADIUS * (0.35 + 0.40 * rng.random())
+            bx, by = RADIUS + math.cos(a) * r, RADIUS + math.sin(a) * r
+            for _ in range(260):
+                u = rng.random()
+                spawn(bx, by, 150 + 600 * u * u, 0.25 + 0.85 * rng.random(), False, True)
+        acc += 260 * dt
+        while acc >= 1:
+            acc -= 1
+            u = rng.random()
+            spawn(RADIUS + (rng.random() * 2 - 1) * 5, RADIUS + (rng.random() * 2 - 1) * 5,
+                  120 + 440 * u * u, 0.25 + 0.85 * rng.random(), False, False)
+        t += dt
+
+    def plot(x, y, g):
+        if 0 <= x < RES and 0 <= y < RES:
+            img[y, x] = g
+    for boom in (False, True):                  # explosion sparks drawn last (FF over DD)
+        g = 0xFF if boom else 0xDD
+        for x, y, vx, vy, *_rest in (s_ for s_ in sp if s_[6] == boom):
+            x0, y0 = x - vx * 0.035, y - vy * 0.035
+            n = int(max(abs(x - x0), abs(y - y0)))
+            for i in range(n + 1):
+                tt = i / n if n else 1
+                plot(int(x0 + (x - x0) * tt), int(y0 + (y - y0) * tt), g)
+    save(img, os.path.join(out_dir, "flame1_doom_spark.png"))
+
+
 def main():
     out_dir = sys.argv[1] if len(sys.argv) > 1 else "assets/previews"
     os.makedirs(out_dir, exist_ok=True)
@@ -203,6 +276,7 @@ def main():
     doom_radial(out_dir, rng)
     doom_radial_mv(out_dir, rng)
     doom_xong(out_dir, rng)
+    doom_spark(out_dir, rng)
 
 
 if __name__ == "__main__":

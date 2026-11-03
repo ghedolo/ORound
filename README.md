@@ -10,7 +10,7 @@ each series has its own page with the full description, controls and previews.
 |---|---|---|
 | Water ripples | [docs/drop.md](docs/drop.md) | `drop1_*`, `empty2`: touch drops water, waves reflect on the round edge; pool floor (tiles, image, animation) bent by refraction; microphone ripples |
 | Game of Life | [docs/life.md](docs/life.md) | `life1_*`, `lifeAllStart`: Life on square cells and on 13 tilings built on the device (Penrose, Alhambra, Cairo, isometric, arabesque, curved tiles, kites and darts) |
-| Fire | [docs/flame.md](docs/flame.md) | `flame1_*`: PSX Doom fire, linear and radial; the radial fire moves to the tap point, changes palette (also palettes from the Xong logo colors) and reacts to blowing on the microphone |
+| Fire | [docs/flame.md](docs/flame.md) | `flame1_*`: PSX Doom fire, linear and radial; the radial fire moves to the tap point, changes palette (also palettes from the Xong logo colors) and reacts to blowing on the microphone; a black and white version with welding sparks, explosions and back-and-forth rotation |
 
 ## Hardware
 
