@@ -19,7 +19,7 @@
 // (0..3 with 37 levels in the original; max loss scaled to LEVELS)
 #define SOURCE_OFF_DIE (3 * (LEVELS - 1) / (DOOM_LEVELS - 1) + 1)
 #define MAX_STEPS      3           // steps per frame at most (after a slow frame)
-#define DEFAULT_SCALE  3
+#define DEFAULT_SCALE  5
 #define HEIGHT_FRAC    0.70f       // average flame length as a fraction of the display radius
 #define RADIUS         (LCD_H_RES / 2)   // display radius in px
 #define LUT_SIZE       (2 * RADIUS)      // LUT side: offsets -RADIUS..RADIUS-1 from a fire center

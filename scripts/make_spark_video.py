@@ -3,7 +3,7 @@
 
 Usage: python scripts/make_spark_video.py [out_path]   (default assets/previews/flame1_doom_spark.gif)
 
-Same constants as the firmware (flame.c, spark.c): radial Doom fire at 3 px, 27 steps/s,
+Same constants as the firmware (flame.c, spark.c): radial Doom fire at 5 px (firmware default), 16.2 steps/s,
 flickering source, black and white with white DD:DD:DD, sinusoidal rotation
 (0.0326 x sin(2 pi t / 15 s) turns/s), welding sparks (white DD), one explosion off center
 (white FF). Fire and sparks are warmed up before the first frame. Fixed RNG seed.
@@ -20,7 +20,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from make_flame_previews import (DOOM_RGB, LEVELS, RADIUS, RES, circle_mask, decay_params,  # noqa: E402
                                  fire_steps, polar_grid, polar_lut)
 
-SCALE = 3
+SCALE = 5
 FPS = 20
 DURATION_S = 8.0
 STEP_RATE = 81 / SCALE            # fire steps per second
