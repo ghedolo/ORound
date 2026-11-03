@@ -73,8 +73,12 @@ static void palette_build(void)
 // Between two steps the grid is drawn shifted outward by m / MICRO of a cell,
 // m = 0..MICRO-1 from the time since the last step: the content moves in
 // sub-cell increments instead of jumping by a whole cell once per step.
-#define MICRO_SHIFT    2
+#define MICRO_SHIFT    4
 #define MICRO          (1 << MICRO_SHIFT)
+// Angle resolution of the LUT: 1/ANG_SUB of a column, so the rotation moves in steps
+// smaller than one column
+#define ANG_SUB_SHIFT  4
+#define ANG_SUB        (1 << ANG_SUB_SHIFT)
 #define LUT_OUTSIDE    0xFFFFu     // radius field of offsets outside the grid
 // The shift grows from 0 at the center to full at RAMP_CELLS cells, so the source
 // disk at the center keeps its size (a full shift there makes it grow and shrink every step).
@@ -99,7 +103,7 @@ static int s_w, s_h;               // grid size: s_w angles, s_h radii
 static fire_t s_fires[2];
 static int s_cur;                  // index of the current fire
 // Per offset (dx, dy) from a fire center, dx, dy in -RADIUS..RADIUS-1:
-// angle column << 16 | radius in 1/MICRO cells (LUT_OUTSIDE beyond the grid)
+// angle in 1/ANG_SUB columns << 16 | radius in 1/MICRO cells (LUT_OUTSIDE beyond the grid)
 static uint32_t *s_lut;
 static int64_t s_next_step_us;
 static uint32_t s_rng;
@@ -156,7 +160,7 @@ static int scale_default_idx(void)
 static void lut_build(void)
 {
     const float c = RADIUS - 0.5f;
-    const float ang_k = s_w / (2.0f * (float)M_PI);
+    const float ang_k = s_w * ANG_SUB / (2.0f * (float)M_PI);
     for (int y = 0; y < LUT_SIZE; y++) {
         float dy = y - c;
         for (int x = 0; x < LUT_SIZE; x++) {
@@ -168,7 +172,7 @@ static void lut_build(void)
                 e = LUT_OUTSIDE;
             } else {
                 int ai = (int)((atan2f(dy, dx) + (float)M_PI) * ang_k);
-                if (ai >= s_w) ai = s_w - 1;
+                if (ai >= s_w * ANG_SUB) ai = s_w * ANG_SUB - 1;
                 if (ai < 0) ai = 0;
                 e = (uint32_t)ai << 16 | (uint32_t)rq;
             }
@@ -467,8 +471,10 @@ static void render_fire_row(const fire_t *fr, int y, uint8_t *val)
     const int w = s_w;
     const int last = s_h - 1;
     const int m = s_micro;
-    int rot = (int)(s_rot_turn * w);
-    if (rot >= w) rot = 0;
+    // Rotation in 1/ANG_SUB columns: smooth also at large scales (few, wide columns)
+    const int wsub = w * ANG_SUB;
+    int rot = (int)(s_rot_turn * wsub);
+    if (rot >= wsub) rot = 0;
     for (int x = x0; x < x1; x++) {
         uint32_t e = lut[x];
         int rq = (int)(e & 0xFFFF);
@@ -478,8 +484,9 @@ static void render_fire_row(const fire_t *fr, int y, uint8_t *val)
         if (rq < 0) rq = 0;
         int ri = rq >> MICRO_SHIFT;
         if (ri > last) continue;
-        int col = (int)(e >> 16) + rot;
-        if (col >= w) col -= w;
+        int asub = (int)(e >> 16) + rot;
+        if (asub >= wsub) asub -= wsub;
+        int col = asub >> ANG_SUB_SHIFT;
         uint8_t v = f[(last - ri) * w + col];
         if (v > val[x]) val[x] = v;
     }
