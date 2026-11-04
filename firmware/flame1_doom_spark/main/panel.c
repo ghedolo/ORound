@@ -50,16 +50,29 @@ void panel_set_brightness(uint8_t level)
     panel_write_reg(0x51, level);
 }
 
-void panel_off(void)
+void panel_wait(void)
 {
-    // Wait until no band transfer is in flight
     for (int i = 0; i < PANEL_BAND_COUNT; i++) {
         panel_band_acquire();
     }
+    for (int i = 0; i < PANEL_BAND_COUNT; i++) {
+        xSemaphoreGive(s_free_bands);
+    }
+}
+
+void panel_fade_out(void)
+{
+    panel_wait();
     for (int level = s_brightness; level >= 0; level -= 15) {
         panel_write_reg(0x51, (uint8_t)level);
         vTaskDelay(pdMS_TO_TICKS(15));
     }
+    panel_write_reg(0x51, 0);
+}
+
+void panel_off(void)
+{
+    panel_fade_out();
     esp_lcd_panel_disp_on_off(s_panel, false);
     esp_lcd_panel_disp_sleep(s_panel, true);
 }

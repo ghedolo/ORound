@@ -10,7 +10,7 @@ each series has its own page with the full description, controls and previews.
 |---|---|---|
 | Water ripples | [docs/drop.md](docs/drop.md) | `drop1_*`, `empty2`: touch drops water, waves reflect on the round edge; pool floor (tiles, image, animation) bent by refraction; microphone ripples |
 | Game of Life | [docs/life.md](docs/life.md) | `life1_*`, `lifeAllStart`: Life on square cells and on 13 tilings built on the device (Penrose, Alhambra, Cairo, isometric, arabesque, curved tiles, kites and darts) |
-| Fire | [docs/flame.md](docs/flame.md) | `flame1_*`: PSX Doom fire, linear and radial; the radial fire moves to the tap point, changes palette (also palettes from the Xong logo colors) and reacts to blowing on the microphone; a black and white version with welding sparks, explosions and back-and-forth rotation |
+| Fire | [docs/flame.md](docs/flame.md) | `flame1_*`: PSX Doom fire, linear and radial; the radial fire moves to the tap point, changes palette (also palettes from the Xong logo colors) and reacts to blowing on the microphone; a black and white version with welding sparks, explosions and back-and-forth rotation; the center moves while blowing; battery charge shown at power off |
 
 ## Hardware
 
@@ -53,12 +53,12 @@ Figures extracted from the local Claude Code session transcripts of this project
 | Metric | Value |
 |---|---|
 | First message (UTC) | 2026-10-16 19:12 |
-| Last message (UTC) | 2026-11-03 21:01 |
-| Calendar span | 19 days |
-| Commits | 45 |
-| Sessions | 11 |
-| Messages (user + assistant) | 1741 (313 + 1428) |
-| Active time | ~12.51 h |
+| Last message (UTC) | 2026-11-04 21:44 |
+| Calendar span | 20 days |
+| Commits | 46 |
+| Sessions | 12 |
+| Messages (user + assistant) | 1802 (326 + 1476) |
+| Active time | ~12.77 h |
 
 Active time is the sum of the gaps between consecutive messages (user and assistant,
 sorted by timestamp) that are at most 5 minutes long. Longer gaps are treated as pauses
@@ -67,17 +67,17 @@ build and flash waits shorter than 5 minutes.
 
 | Tokens | Count |
 |---|---|
-| Input (non-cache) | 2,854 |
-| Output | 1,167,754 |
-| Cache write | 2,977,825 |
-| Cache read | 286,105,843 |
-| Total | 290,254,276 |
+| Input (non-cache) | 2,952 |
+| Output | 1,189,562 |
+| Cache write | 3,063,893 |
+| Cache read | 290,687,972 |
+| Total | 294,944,379 |
 
 Cache read tokens are the conversation context re-sent to the model at every turn and
 served from the prompt cache; they are by far the largest share but are billed at a
 fraction of the normal input price.
 
-**Caveman mode.** All eleven sessions ran with Caveman mode active (terse responses).
-Average output was 818 tokens per assistant message (1,167,754 output tokens in total).
+**Caveman mode.** All twelve sessions ran with Caveman mode active (terse responses).
+Average output was 806 tokens per assistant message (1,189,562 output tokens in total).
 No session without Caveman mode exists in this project, so no comparison with
 standard mode is available.

@@ -23,6 +23,13 @@ void panel_band_send(pixel_t *band, int y1, int y2);
 // 0..255, AMOLED brightness register 0x51
 void panel_set_brightness(uint8_t level);
 
+// Waits until no band transfer is in flight.
+void panel_wait(void);
+
+// Waits for pending transfers and fades the brightness to 0; the display stays on.
+// panel_set_brightness restores it.
+void panel_fade_out(void);
+
 // Waits for pending transfers, fades out, turns the display off and puts it to sleep.
 // Call from the rendering task, between frames.
 void panel_off(void);

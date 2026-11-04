@@ -13,6 +13,7 @@
 #include "flame.h"
 #include "touch_cst820.h"
 #include "mic.h"
+#include "battery.h"
 #include "nvs.h"
 #include "nvs_flash.h"
 
@@ -26,6 +27,7 @@
 #define BRIGHT_STILL_D2   (15 * 15) // max movement while holding still
 #define BRIGHT_RANGE_PX   300       // vertical drag for the full brightness range
 #define BRIGHT_MIN        0.15f     // lowest position (0..1), keeps the display readable
+#define BATTERY_SHOW_MS   1000      // battery screen at power off
 
 static const char *TAG = "flame1_doom_spark";
 
@@ -107,11 +109,19 @@ static bool key_pressed(button_t *key, int64_t now)
     return down;
 }
 
-// Power off. On battery, BAT_EN (latch) low cuts the supply. On USB the board stays
+// Power off. The fire fades out, then the battery charge is shown for BATTERY_SHOW_MS.
+// On battery, BAT_EN (latch) low cuts the supply. On USB the board stays
 // powered, so it goes to deep sleep instead and PWR wakes it (the chip restarts).
 static void power_off(void)
 {
     ESP_LOGI(TAG, "power off");
+    float volts = battery_volts();
+    printf("battery %.2f V, %d%%\n", volts, battery_percent(volts));
+    panel_fade_out();
+    battery_show(volts);
+    panel_wait();
+    brightness_apply();
+    vTaskDelay(pdMS_TO_TICKS(BATTERY_SHOW_MS));
     panel_off();
     gpio_set_level(PWR_PIN_LATCH, 0);
     vTaskDelay(pdMS_TO_TICKS(500));

@@ -128,6 +128,14 @@ static int s_lat = 1;              // lateral shift range: -s_lat..+s_lat column
 #define BLOW_OUT_LEVEL     0.85f
 #define BLOW_OUT_US        500000
 #define RELIGHT_QUIET_US   3000000
+// Blow shift: while the wind blows, the drawn center of the current fire moves up to
+// BLOW_SHIFT_PX in a random direction (new direction for every blow, i.e. after quiet),
+// and goes back when the wind stops. Render only: the grid does not move.
+#define BLOW_SHIFT_PX      48.0f
+#define BLOW_SHIFT_TAU_S   0.35f   // time constant of the shift following the wind
+static float s_shift;              // current shift in px
+static float s_shift_dx, s_shift_dy;   // unit direction of the current blow
+static bool s_shift_dir_set;
 static float s_wind;
 static float s_agit, s_low;        // 0..1
 static int64_t s_wind_us;          // time of the last flame_set_wind call
@@ -394,6 +402,16 @@ void flame_set_wind(float level, int64_t now_us)
         decay_apply();
     }
 
+    if (s_wind < WIND_QUIET) s_shift_dir_set = false;
+    if (!s_shift_dir_set && s_wind >= AGIT_START) {
+        float a = 2.0f * (float)M_PI * (rng_next() & 0xFFFF) / 65536.0f;
+        s_shift_dx = cosf(a);
+        s_shift_dy = sinf(a);
+        s_shift_dir_set = true;
+    }
+    float target = BLOW_SHIFT_PX * ramp(s_wind, AGIT_START, LOW_FULL);
+    s_shift += (target - s_shift) * fminf(1.0f, dt / BLOW_SHIFT_TAU_S);
+
     fire_t *cur = &s_fires[s_cur];
     if (s_wind >= BLOW_OUT_LEVEL) {
         if (!s_strong_since) s_strong_since = now_us;
@@ -429,6 +447,20 @@ static float s_rot_turn;
 static int64_t s_rot_us;
 static float s_rot_t;              // s since the start of the rotation cycle
 
+// Drawn center of fire fr: the current fire is moved by the blow shift (kept on the display)
+static void shifted_center(const fire_t *fr, int *x, int *y)
+{
+    *x = fr->cx;
+    *y = fr->cy;
+    if (fr != &s_fires[s_cur]) return;
+    *x += (int)lroundf(s_shift * s_shift_dx);
+    *y += (int)lroundf(s_shift * s_shift_dy);
+    if (*x < 0) *x = 0;
+    if (*x > LCD_H_RES - 1) *x = LCD_H_RES - 1;
+    if (*y < 0) *y = 0;
+    if (*y > LCD_V_RES - 1) *y = LCD_V_RES - 1;
+}
+
 void flame_update(int64_t now_us)
 {
     if (s_rot_us) {
@@ -454,13 +486,16 @@ void flame_update(int64_t now_us)
     int m = (int)(since * MICRO / s_step_us);
     s_micro = m < 0 ? 0 : (m > MICRO - 1 ? MICRO - 1 : m);
     const fire_t *cur = &s_fires[s_cur];
-    spark_update(now_us, cur->cx, cur->cy, cur->source_on, s_wind);
+    int sx, sy;
+    shifted_center(cur, &sx, &sy);
+    spark_update(now_us, sx, sy, cur->source_on, s_wind);
 }
 
 // Adds fire fr to the intensity row val (max), display row y
 static void render_fire_row(const fire_t *fr, int y, uint8_t *val)
 {
-    const int cx = fr->cx, cy = fr->cy;
+    int cx, cy;
+    shifted_center(fr, &cx, &cy);
     int oy = y - cy + RADIUS;
     if (oy < 0 || oy >= LUT_SIZE) return;
     int x0 = cx - RADIUS, x1 = cx + RADIUS;     // display x range covered by the LUT
